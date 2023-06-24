@@ -2,3 +2,7 @@ x64/
 *.vcxproj
 Final_project.vcxproj.filters
 Final_project.vcxproj.user
+
+cmake-build-debug/
+.idea/
+CMakeLists.txt
