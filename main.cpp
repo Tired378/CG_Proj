@@ -38,18 +38,23 @@ struct VertexMesh {
 	glm::vec2 UV;
 };
 
-struct VertexOverlay {
+/*struct VertexOverlay {
 	glm::vec2 pos;
 	glm::vec2 UV;
-};
+};*/
 
 /* A16 */
-/* Add the C++ datastructure for the required vertex format */
-struct VertexVColor {
+/* Add the C++ data structure for the required vertex format */
+/*struct VertexVColor {
 	glm::vec3 pos;
 	glm::vec3 norm;
 	glm::vec3 color;
-};
+};*/
+
+/*struct VertexEnv {
+	glm::vec3 pos;
+	glm::vec3 norm;
+};*/
 
 
 
@@ -58,69 +63,73 @@ struct VertexVColor {
 class A16 : public BaseProject {
 	protected:
 
-	// Current aspect ratio (used by the callback that resized the window
+	// Current aspect ratio (used by the callback that resized the window)
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLGubo, DSLMesh, DSLOverlay;
+	DescriptorSetLayout DSLGubo;
+	DescriptorSetLayout DSLMesh;
+	//DescriptorSetLayout DSLOverlay;
 	/* A16 */
 	/* Add the variable that will contain the required Descriptor Set Layout */
-	DescriptorSetLayout DSLVColor;
+	//DescriptorSetLayout DSLVColor;
+	//DescriptorSetLayout DSLEnv;
 
 	// Vertex formats
 	VertexDescriptor VMesh;
-	VertexDescriptor VOverlay;
+	//VertexDescriptor VOverlay;
 	/* A16 */
 	/* Add the variable that will contain the required Vertex format definition */
-	VertexDescriptor VVColor;
+	//VertexDescriptor VVColor;
+	//VertexDescriptor VEnv;
 
 	// Pipelines [Shader couples]
 	Pipeline PMesh;
-	Pipeline POverlay;
+	//Pipeline POverlay;
 	/* A16 */
 	/* Add the variable that will contain the new pipeline */
-	Pipeline PVColor;
+	//Pipeline PVColor;
+	//Pipeline PEnv;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
-	Model<VertexMesh> MBody, MHandle, MWheel;
+	//Model<VertexMesh> MBody, MHandle, MWheel;
 	/* A16 */
 	/* Add the variable that will contain the model for the room */
-	Model<VertexVColor> MRoom;
+	//Model<VertexVColor> MRoom;
+	//Model<VertexEnv> MEnv;
 
-	Model<VertexOverlay> MKey, MSplash;
-	DescriptorSet DSGubo, DSBody, DSHandle, DSWheel1, DSWheel2, DSWheel3, DSKey, DSSplash;
+	//Model<VertexOverlay> MKey, MSplash;
+	DescriptorSet DSGubo;
+	//DescriptorSet DSBody, DSHandle, DSWheel1, DSWheel2, DSWheel3, DSKey, DSSplash;
 	/* A16 */
 	/* Add the variable that will contain the Descriptor Set for the room */
-	DescriptorSet DSRoom;
+	//DescriptorSet DSRoom;
+	//DescriptorSet DSEnv;
 
-	Texture TBody, THandle, TWheel, TKey, TSplash;
+	//Texture TBody, THandle, TWheel, TKey, TSplash;
 	
 	// C++ storage for uniform variables
-	MeshUniformBlock uboBody, uboHandle, uboWheel1, uboWheel2, uboWheel3;
+	//MeshUniformBlock uboBody, uboHandle, uboWheel1, uboWheel2, uboWheel3;
 	/* A16 */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
-	MeshUniformBlock uboRoom;
-
+	//MeshUniformBlock uboRoom;
+	//MeshUniformBlock uboEnv;
 
 	GlobalUniformBlock gubo;
-	OverlayUniformBlock uboKey, uboSplash;
+	//OverlayUniformBlock uboKey, uboSplash;
 
 	// Other application parameters
 	float CamH, CamRadius, CamPitch, CamYaw;
-	int gameState;
-	float HandleRot = 0.0;
-	float Wheel1Rot = 0.0;
-	float Wheel2Rot = 0.0;
-	float Wheel3Rot = 0.0;
+	//int gameState;
 
 
 	// Here you set the main application parameters
-	void setWindowParameters() {
-		// window size, titile and initial background
+	void setWindowParameters() override {
+		// window size, title and initial background
 		windowWidth = 800;
 		windowHeight = 600;
-		windowTitle = "A16";
+		windowTitle = "Car Dealership";
     	windowResizable = GLFW_TRUE;
 		initialBackgroundColor = {0.0f, 0.005f, 0.01f, 1.0f};
 		
@@ -135,13 +144,13 @@ class A16 : public BaseProject {
 	}
 	
 	// What to do when the window changes size
-	void onWindowResize(int w, int h) {
+	void onWindowResize(int w, int h) override {
 		Ar = (float)w / (float)h;
 	}
 	
-	// Here you load and setup all your Vulkan Models and Texutures.
+	// Here you load and setup all your Vulkan Models and Textures.
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
-	void localInit() {
+	void localInit() override {
 		// Descriptor Layouts [what will be passed to the shaders]
 		DSLMesh.init(this, {
 					// this array contains the bindings:
@@ -149,20 +158,20 @@ class A16 : public BaseProject {
 					// second element : the type of element (buffer or texture)
 					//                  using the corresponding Vulkan constant
 					// third  element : the pipeline stage where it will be used
-					//                  using the corresponding Vulkan constant
+					//                  with the corresponding Vulkan constant
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 				});
 				
-		DSLOverlay.init(this, {
+		/*DSLOverlay.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-				});
+				});*/
 		/* A16 */
 		/* Init the new Data Set Layout */
-		DSLVColor.init(this, {
+		/*DSLVColor.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
-			});
+			});*/
 				
 		DSLGubo.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
@@ -183,17 +192,17 @@ class A16 : public BaseProject {
 				  // third  element : the offset of this element in the memory record
 				  // fourth element : the data type of the element
 				  //                  using the corresponding Vulkan constant
-				  // fifth  elmenet : the size in byte of the element
+				  // fifth  element : the size in byte of the element
 				  // sixth  element : a constant defining the element usage
 				  //                   POSITION - a vec3 with the position
 				  //                   NORMAL   - a vec3 with the normal vector
 				  //                   UV       - a vec2 with a UV coordinate
-				  //                   COLOR    - a vec4 with a RGBA color
+				  //                   COLOR    - a vec4 with an RGBA color
 				  //                   TANGENT  - a vec4 with the tangent vector
 				  //                   OTHER    - anything else
 				  //
 				  // ***************** DOUBLE CHECK ********************
-				  //    That the Vertex data structure you use in the "offsetoff" and
+				  //    That the Vertex data structure you use in the "offsetof" and
 				  //	in the "sizeof" in the previous array, refers to the correct one,
 				  //	if you have more than one vertex format!
 				  // ***************************************************
@@ -205,17 +214,17 @@ class A16 : public BaseProject {
 				         sizeof(glm::vec2), UV}
 				});
 
-		VOverlay.init(this, {
+		/*VOverlay.init(this, {
 				  {0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}
 				}, {
 				  {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, pos),
 				         sizeof(glm::vec2), OTHER},
 				  {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, UV),
 				         sizeof(glm::vec2), UV}
-				});
+				});*/
 		/* A16 */
 		/* Define the new Vertex Format */
-		VVColor.init(this, {
+		/*VVColor.init(this, {
 				  {0, sizeof(VertexVColor), VK_VERTEX_INPUT_RATE_VERTEX}
 			}, {
 			  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, pos),
@@ -224,20 +233,20 @@ class A16 : public BaseProject {
 					 sizeof(glm::vec3), NORMAL},
 			  {0, 2,  VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, color),
 					 sizeof(glm::vec3), COLOR}
-			});
+			});*/
 
 		// Pipelines [Shader couples]
 		// The second parameter is the pointer to the vertex definition
 		// Third and fourth parameters are respectively the vertex and fragment shaders
 		// The last array, is a vector of pointer to the layouts of the sets that will
-		// be used in this pipeline. The first element will be set 0, and so on..
+		// be used in this pipeline. The first element will be set 0, and so on...
 		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
-		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
+		/*POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
- 								    VK_CULL_MODE_NONE, false);
+ 								    VK_CULL_MODE_NONE, false);*/
 		/* A16 */
 		/* Create the new pipeline, using shaders "VColorVert.spv" and "VColorFrag.spv" */
-		PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", { &DSLGubo, &DSLVColor });
+		//PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", { &DSLGubo, &DSLVColor });
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
@@ -245,59 +254,59 @@ class A16 : public BaseProject {
 		// The second parameter is the pointer to the vertex definition for this model
 		// The third parameter is the file name
 		// The last is a constant specifying the file type: currently only OBJ or GLTF
-		MBody.init(this,   &VMesh, "Models/SlotBody.obj", OBJ);
+		/*MBody.init(this,   &VMesh, "Models/SlotBody.obj", OBJ);
 		MHandle.init(this, &VMesh, "Models/SlotHandle.obj", OBJ);
-		MWheel.init(this,  &VMesh, "Models/SlotWheel.obj", OBJ);
+		MWheel.init(this,  &VMesh, "Models/SlotWheel.obj", OBJ);*/
 		/* A16 */
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
-		MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
+		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
 
 		
 		// Creates a mesh with direct enumeration of vertices and indices
-		MKey.vertices = {{{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
+		/*MKey.vertices = {{{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
 						 {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}}};
 		MKey.indices = {0, 1, 2,    1, 2, 3};
-		MKey.initMesh(this, &VOverlay);
+		MKey.initMesh(this, &VOverlay);*/
 		
 		// Creates a mesh with direct enumeration of vertices and indices
-		MSplash.vertices = {{{-1.0f, -0.58559f}, {0.0102f, 0.0f}}, {{-1.0f, 0.58559f}, {0.0102f,0.85512f}},
+		/*MSplash.vertices = {{{-1.0f, -0.58559f}, {0.0102f, 0.0f}}, {{-1.0f, 0.58559f}, {0.0102f,0.85512f}},
 						 {{ 1.0f,-0.58559f}, {1.0f,0.0f}}, {{ 1.0f, 0.58559f}, {1.0f,0.85512f}}};
 		MSplash.indices = {0, 1, 2,    1, 2, 3};
-		MSplash.initMesh(this, &VOverlay);
+		MSplash.initMesh(this, &VOverlay);*/
 		
 		// Create the textures
 		// The second parameter is the file name
-		TBody.init(this,   "textures/SlotBody.png");
+		/*TBody.init(this,   "textures/SlotBody.png");
 		THandle.init(this, "textures/SlotHandle.png");
 		TWheel.init(this,  "textures/SlotWheel.png");
 		TKey.init(this,    "textures/PressSpace.png");
-		TSplash.init(this, "textures/SplashScreen.png");
+		TSplash.init(this, "textures/SplashScreen.png");*/
 		
 		// Init local variables
 		CamH = 1.0f;
 		CamRadius = 3.0f;
 		CamPitch = glm::radians(15.f);
 		CamYaw = glm::radians(30.f);
-		gameState = 0;
+		//gameState = 0;
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
-	void pipelinesAndDescriptorSetsInit() {
+	void pipelinesAndDescriptorSetsInit() override {
 		// This creates a new pipeline (with the current surface), using its shaders
 		PMesh.create();
-		POverlay.create();
+		/*POverlay.create();*/
 		/* A16 */
 		/* Create the new pipeline */
-		PVColor.create();
+		//PVColor.create();
 		
 		// Here you define the data set
-		DSBody.init(this, &DSLMesh, {
+		/*DSBody.init(this, &DSLMesh, {
 		// the second parameter, is a pointer to the Uniform Set Layout of this set
 		// the last parameter is an array, with one element per binding of the set.
-		// first  elmenet : the binding number
+		// first  element : the binding number
 		// second element : UNIFORM or TEXTURE (an enum) depending on the type
-		// third  element : only for UNIFORMs, the size of the corresponding C++ object. For texture, just put 0
-		// fourth element : only for TEXTUREs, the pointer to the corresponding texture object. For uniforms, use nullptr
+		// third  element : only for UNIFORMS, the size of the corresponding C++ object. For texture, just put 0
+		// fourth element : only for TEXTURES, the pointer to the corresponding texture object. For uniforms, use nullptr
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TBody}
 				});
@@ -316,21 +325,21 @@ class A16 : public BaseProject {
 		DSWheel3.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TWheel}
-				});
+				});*/
 		/* A16 */
 		/* Define the data set for the room */
-		DSRoom.init(this, &DSLVColor, {
+		/*DSRoom.init(this, &DSLVColor, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}
-			});
+			});*/
 
-		DSKey.init(this, &DSLOverlay, {
+		/*DSKey.init(this, &DSLOverlay, {
 					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TKey}
 				});
 		DSSplash.init(this, &DSLOverlay, {
 					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TSplash}
-				});
+				});*/
 		DSGubo.init(this, &DSLGubo, {
 					{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
 				});
@@ -338,26 +347,26 @@ class A16 : public BaseProject {
 
 	// Here you destroy your pipelines and Descriptor Sets!
 	// All the object classes defined in Starter.hpp have a method .cleanup() for this purpose
-	void pipelinesAndDescriptorSetsCleanup() {
+	void pipelinesAndDescriptorSetsCleanup() override {
 		// Cleanup pipelines
 		PMesh.cleanup();
-		POverlay.cleanup();
+		/*POverlay.cleanup();*/
 		/* A16 */
 		/* cleanup the new pipeline */
-		PVColor.cleanup();
+		//PVColor.cleanup();
 
 		// Cleanup datasets
-		DSBody.cleanup();
+		/*DSBody.cleanup();
 		DSHandle.cleanup();
 		DSWheel1.cleanup();
 		DSWheel2.cleanup();
-		DSWheel3.cleanup();
+		DSWheel3.cleanup();*/
 		/* A16 */
 		/* cleanup the dataset for the room */
-		DSRoom.cleanup();
+		//DSRoom.cleanup();
 
-		DSKey.cleanup();
-		DSSplash.cleanup();
+		/*DSKey.cleanup();
+		DSSplash.cleanup();*/
 		DSGubo.cleanup();
 	}
 
@@ -365,61 +374,61 @@ class A16 : public BaseProject {
 	// All the object classes defined in Starter.hpp have a method .cleanup() for this purpose
 	// You also have to destroy the pipelines: since they need to be rebuilt, they have two different
 	// methods: .cleanup() recreates them, while .destroy() delete them completely
-	void localCleanup() {
+	void localCleanup() override {
 		// Cleanup textures
-		TBody.cleanup();
+		/*TBody.cleanup();
 		THandle.cleanup();
 		TWheel.cleanup();
 		TKey.cleanup();
-		TSplash.cleanup();
+		TSplash.cleanup();*/
 		
 		// Cleanup models
-		MBody.cleanup();
+		/*MBody.cleanup();
 		MHandle.cleanup();
 		MWheel.cleanup();
 		MKey.cleanup();
-		MSplash.cleanup();
+		MSplash.cleanup();*/
 		/* A16 */
 		/* Cleanup the mesh for the room */
-		MRoom.cleanup();
+		//MRoom.cleanup();
 		
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
-		DSLOverlay.cleanup();
+		/*DSLOverlay.cleanup();*/
 		/* A16 */
 		/* Cleanup the new Descriptor Set Layout */
-		DSLVColor.cleanup();
+		//DSLVColor.cleanup();
 
 		DSLGubo.cleanup();
 		
-		// Destroies the pipelines
-		PMesh.destroy();		
-		POverlay.destroy();
+		// Destroys the pipelines
+		PMesh.destroy();
+		/*POverlay.destroy();*/
 		/* A16 */
 		/* Destroy the new pipeline */
-		PVColor.destroy();
+		//PVColor.destroy();
 	}
 	
 	// Here it is the creation of the command buffer:
 	// You send to the GPU all the objects you want to draw,
 	// with their buffers and textures
 	
-	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) {
-		// sets global uniforms (see below fro parameters explanation)
+	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
+		// sets global uniforms (see below for parameters explanation)
 		DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
 
 		// binds the pipeline
 		PMesh.bind(commandBuffer);
-		// For a pipeline object, this command binds the corresponing pipeline to the command buffer passed in its parameter
+		// For a pipeline object, this command binds the corresponding pipeline to the command buffer passed in its parameter
 
 		// binds the model
-		MBody.bind(commandBuffer);
-		// For a Model object, this command binds the corresponing index and vertex buffer
+		//MBody.bind(commandBuffer);
+		// For a Model object, this command binds the corresponding index and vertex buffer
 		// to the command buffer passed in its parameter
 		
 		// binds the data set
-		DSBody.bind(commandBuffer, PMesh, 1, currentImage);
-		// For a Dataset object, this command binds the corresponing dataset
+		//DSBody.bind(commandBuffer, PMesh, 1, currentImage);
+		// For a Dataset object, this command binds the corresponding dataset
 		// to the command buffer and pipeline passed in its first and second parameters.
 		// The third parameter is the number of the set being bound
 		// As described in the Vulkan tutorial, a different dataset is required for each image in the swap chain.
@@ -427,17 +436,17 @@ class A16 : public BaseProject {
 		// of the current image in the swap chain, passed in its last parameter
 					
 		// record the drawing command in the command buffer
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MBody.indices.size()), 1, 0, 0, 0);
+		//vkCmdDrawIndexed(commandBuffer,
+		//		static_cast<uint32_t>(MBody.indices.size()), 1, 0, 0, 0);
 		// the second parameter is the number of indexes to be drawn. For a Model object,
 		// this can be retrieved with the .indices.size() method.
 
-		MHandle.bind(commandBuffer);
+		/*MHandle.bind(commandBuffer);
 		DSHandle.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MHandle.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MHandle.indices.size()), 1, 0, 0, 0);*/
 
-		MWheel.bind(commandBuffer);
+		/*MWheel.bind(commandBuffer);
 		DSWheel1.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
@@ -446,30 +455,30 @@ class A16 : public BaseProject {
 				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
 		DSWheel3.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);*/
 		/* A16 */
 		/* Insert the commands to draw the room */
-		PVColor.bind(commandBuffer);
+		/*PVColor.bind(commandBuffer);
 		MRoom.bind(commandBuffer);
 		DSRoom.bind(commandBuffer, PVColor, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);
+			static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);*/
 
-		POverlay.bind(commandBuffer);
+		/*POverlay.bind(commandBuffer);
 		MKey.bind(commandBuffer);
 		DSKey.bind(commandBuffer, POverlay, 0, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MKey.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MKey.indices.size()), 1, 0, 0, 0);*/
 
-		MSplash.bind(commandBuffer);
+		/*MSplash.bind(commandBuffer);
 		DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);
+				static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);*/
 	}
 
 	// Here is where you update the uniforms.
 	// Very likely this will be where you will be writing the logic of your application.
-	void updateUniformBuffer(uint32_t currentImage) {
+	void updateUniformBuffer(uint32_t currentImage) override {
 		// Standard procedure to quit when the ESC key is pressed
 		if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose(window, GL_TRUE);
@@ -477,14 +486,14 @@ class A16 : public BaseProject {
 		
 		// Integration with the timers and the controllers
 		float deltaT;
-		glm::vec3 m = glm::vec3(0.0f), r = glm::vec3(0.0f);
+		auto m = glm::vec3(0.0f), r = glm::vec3(0.0f);
 		bool fire = false;
 		getSixAxis(deltaT, m, r, fire);
 		// getSixAxis() is defined in Starter.hpp in the base class.
 		// It fills the float point variable passed in its first parameter with the time
 		// since the last call to the procedure.
 		// It fills vec3 in the second parameters, with three values in the -1,1 range corresponding
-		// to motion (with left stick of the gamepad, or ASWD + RF keys on the keyboard)
+		// to motion (with left stick of the gamepad, or WASD + RF keys on the keyboard)
 		// It fills vec3 in the third parameters, with three values in the -1,1 range corresponding
 		// to motion (with right stick of the gamepad, or Arrow keys + QE keys on the keyboard, or mouse)
 		// If fills the last boolean variable with true if fire has been pressed:
@@ -507,8 +516,8 @@ class A16 : public BaseProject {
 		static float Wheel3Rot = 0.0;
 		static float TargetRot = 0.0;	// Target rotation
 
-//std::cout << gameState << "\n";	
-		switch(gameState) {		// main state machine implementation
+		//std::cout << gameState << "\n";
+		/*switch(gameState) {		// main state machine implementation
 		  case 0: // initial state - show splash screen
 			if(handleFire) {
 				gameState = 1;	// jump to the wait key state
@@ -537,18 +546,18 @@ class A16 : public BaseProject {
 			if(HandleRot < 0.0f) {	// when limit is reached, jump the 3 wheels spinning state
 				gameState = 4;
 				HandleRot = 0.0f;
-				TargetRot = Wheel1Rot + (10 + (rand() % 11)) * SymExtent;
+				TargetRot = Wheel1Rot + (10 + (float)(rand() % 11)) * SymExtent;
 			}
 			break;
 		  case 4: // 3 wheels spinning state
 			Wheel1Rot += WheelSpeed * deltaT;
 			Wheel2Rot += WheelSpeed * deltaT;
 			Wheel3Rot += WheelSpeed * deltaT;
-//std::cout << Wheel1Rot << " --- " << TargetRot << "\n";
+			//std::cout << Wheel1Rot << " --- " << TargetRot << "\n";
 			if(Wheel1Rot >= TargetRot) {	// When the target rotation is reached, jump to the next state
 				gameState = 5;
 				Wheel1Rot = round(TargetRot / SymExtent) * SymExtent; // quantize position
-				TargetRot = Wheel2Rot + (10 + (rand() % 11)) * SymExtent;
+				TargetRot = Wheel2Rot + (10 + (float)(rand() % 11)) * SymExtent;
 			}
 			break;
 		  case 5: // 2 wheels spinning state
@@ -557,7 +566,7 @@ class A16 : public BaseProject {
 			if(Wheel2Rot >= TargetRot) {	// When the target rotation is reached, jump to the next state
 				gameState = 6;
 				Wheel2Rot = round(TargetRot / SymExtent) * SymExtent; // quantize position
-				TargetRot = Wheel3Rot + (10 + (rand() % 11)) * SymExtent;
+				TargetRot = Wheel3Rot + (10 + (float)(rand() % 11)) * SymExtent;
 			}
 			break;
 		  case 6: // 1 wheels spinning state
@@ -567,7 +576,7 @@ class A16 : public BaseProject {
 				Wheel3Rot = round(TargetRot / SymExtent) * SymExtent; // quantize position
 			}
 			break;
-		}
+		}*/
 		
 		// Parameters
 		// Camera FOV-y, Near Plane and Far Plane
@@ -576,11 +585,11 @@ class A16 : public BaseProject {
 		const float farPlane = 100.0f;
 		const float rotSpeed = glm::radians(90.0f);
 		const float movSpeed = 1.0f;
-		
-		CamH += m.z * movSpeed * deltaT;
-		CamRadius -= m.x * movSpeed * deltaT;
+
+		CamH += m.y * movSpeed * deltaT;
+		CamRadius -= m.z * movSpeed * deltaT;
 		CamPitch -= r.x * rotSpeed * deltaT;
-		CamYaw += r.y * rotSpeed * deltaT;
+		CamYaw += m.x * rotSpeed * deltaT;
 		
 		glm::mat4 Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
 		Prj[1][1] *= -1;
@@ -603,7 +612,7 @@ class A16 : public BaseProject {
 		// the third parameter is its size
 		// the fourth parameter is the location inside the descriptor set of this uniform block
 
-		glm::mat4 World = glm::mat4(1);		
+		/*glm::mat4 World = glm::mat4(1);
 		uboBody.amb = 1.0f; uboBody.gamma = 180.0f; uboBody.sColor = glm::vec3(1.0f);
 		uboBody.mvpMat = Prj * View * World;
 		uboBody.mMat = World;
@@ -640,23 +649,23 @@ class A16 : public BaseProject {
 		uboWheel3.mvpMat = Prj * View * World;
 		uboWheel3.mMat = World;
 		uboWheel3.nMat = glm::inverse(glm::transpose(World));
-		DSWheel3.map(currentImage, &uboWheel3, sizeof(uboWheel3), 0);
+		DSWheel3.map(currentImage, &uboWheel3, sizeof(uboWheel3), 0);*/
 		/* A16 */
 		/* fill the uniform block for the room. Identical to the one of the body of the slot machine */
-		World = glm::mat4(1);
+		/*World = glm::mat4(1);
 		uboRoom.amb = 1.0f; uboRoom.gamma = 180.0f; uboRoom.sColor = glm::vec3(1.0f);
 		uboRoom.mvpMat = Prj * View * World;
 		uboRoom.mMat = World;
 		uboRoom.nMat = glm::inverse(glm::transpose(World));
-		DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);
+		DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);*/
 		/* map the uniform data block to the GPU */
 
 
-		uboKey.visible = (gameState == 1) ? 1.0f : 0.0f;
+		/*uboKey.visible = (gameState == 1) ? 1.0f : 0.0f;
 		DSKey.map(currentImage, &uboKey, sizeof(uboKey), 0);
 
 		uboSplash.visible = (gameState == 0) ? 1.0f : 0.0f;
-		DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);
+		DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);*/
 	}	
 };
 
