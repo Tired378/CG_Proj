@@ -94,6 +94,7 @@ class A16 : public BaseProject {
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	// Please note that Model objects depends on the corresponding vertex structure
 	//Model<VertexMesh> MBody, MHandle, MWheel;
+	Model<VertexMesh> MCar1;
 	/* A16 */
 	/* Add the variable that will contain the model for the room */
 	//Model<VertexVColor> MRoom;
@@ -102,15 +103,18 @@ class A16 : public BaseProject {
 	//Model<VertexOverlay> MKey, MSplash;
 	DescriptorSet DSGubo;
 	//DescriptorSet DSBody, DSHandle, DSWheel1, DSWheel2, DSWheel3, DSKey, DSSplash;
+	DescriptorSet DSCar1;
 	/* A16 */
 	/* Add the variable that will contain the Descriptor Set for the room */
 	//DescriptorSet DSRoom;
 	//DescriptorSet DSEnv;
 
 	//Texture TBody, THandle, TWheel, TKey, TSplash;
+	Texture TCar1_0, TCar1_1, TCar1_2;
 	
 	// C++ storage for uniform variables
 	//MeshUniformBlock uboBody, uboHandle, uboWheel1, uboWheel2, uboWheel3;
+	MeshUniformBlock uboCar1;
 	/* A16 */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
@@ -136,9 +140,9 @@ class A16 : public BaseProject {
 		// Descriptor pool sizes
 		/* A16 */
 		/* Update the requirements for the size of the pool */
-		uniformBlocksInPool = 9;
-		texturesInPool = 7;
-		setsInPool = 9;
+		uniformBlocksInPool = 28;
+		texturesInPool = 27;
+		setsInPool = 28;
 		
 		Ar = (float)windowWidth / (float)windowHeight;
 	}
@@ -160,7 +164,9 @@ class A16 : public BaseProject {
 					// third  element : the pipeline stage where it will be used
 					//                  with the corresponding Vulkan constant
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 				});
 				
 		/*DSLOverlay.init(this, {
@@ -261,6 +267,9 @@ class A16 : public BaseProject {
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
 		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
 
+		/* Car1 */
+		MCar1.init(this, &VMesh, "Models/CarCyberpunk.gltf", GLTF);
+
 		
 		// Creates a mesh with direct enumeration of vertices and indices
 		/*MKey.vertices = {{{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
@@ -280,7 +289,15 @@ class A16 : public BaseProject {
 		THandle.init(this, "textures/SlotHandle.png");
 		TWheel.init(this,  "textures/SlotWheel.png");
 		TKey.init(this,    "textures/PressSpace.png");
-		TSplash.init(this, "textures/SplashScreen.png");*/
+		TSplash.init(this, "textures/SplashScreen.png");
+
+		/* Car1 */
+		//TCar1.init(this, "textures/Car1/Aluminum.png");
+		//TCar1_grille.init(this, "textures/Car1/grille.png", VK_FORMAT_R8G8B8A8_UNORM);
+		//TCarR8_trim.init(this, "textures/Car1/trim.png", VK_FORMAT_R8G8B8A8_UNORM);
+		TCar1_0.init(this, "textures/Car1/cb_car_baseColor.png");
+		TCar1_1.init(this, "textures/Car1/cb_car_emissive.png", VK_FORMAT_R8G8B8A8_UNORM);
+		TCar1_2.init(this, "textures/Car1/cb_car_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
 		
 		// Init local variables
 		CamH = 1.0f;
@@ -326,6 +343,12 @@ class A16 : public BaseProject {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TWheel}
 				});*/
+		DSCar1.init(this, &DSLMesh, {
+					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+					{1, TEXTURE, 0, &TCar1_0},
+					{2, TEXTURE, 0, &TCar1_1},
+					{3, TEXTURE, 0, &TCar1_2}
+			});
 		/* A16 */
 		/* Define the data set for the room */
 		/*DSRoom.init(this, &DSLVColor, {
@@ -381,13 +404,18 @@ class A16 : public BaseProject {
 		TWheel.cleanup();
 		TKey.cleanup();
 		TSplash.cleanup();*/
+		TCar1_0.cleanup();
+		TCar1_1.cleanup();
+		TCar1_2.cleanup();
 		
 		// Cleanup models
-		/*MBody.cleanup();
+		/*
+		MBody.cleanup();
 		MHandle.cleanup();
 		MWheel.cleanup();
 		MKey.cleanup();
 		MSplash.cleanup();*/
+		MCar1.cleanup();
 		/* A16 */
 		/* Cleanup the mesh for the room */
 		//MRoom.cleanup();
@@ -455,7 +483,12 @@ class A16 : public BaseProject {
 				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
 		DSWheel3.bind(commandBuffer, PMesh, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);*/
+				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
+				*/
+		MCar1.bind(commandBuffer);
+		DSCar1.bind(commandBuffer, PMesh, 1, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
 		/* A16 */
 		/* Insert the commands to draw the room */
 		/*PVColor.bind(commandBuffer);
@@ -649,7 +682,15 @@ class A16 : public BaseProject {
 		uboWheel3.mvpMat = Prj * View * World;
 		uboWheel3.mMat = World;
 		uboWheel3.nMat = glm::inverse(glm::transpose(World));
-		DSWheel3.map(currentImage, &uboWheel3, sizeof(uboWheel3), 0);*/
+		DSWheel3.map(currentImage, &uboWheel3, sizeof(uboWheel3), 0);
+		*/
+		glm::mat4 World = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(0.01, 0.01, 0.01));
+		uboCar1.amb = 1.0f; uboCar1.gamma = 180.0f; uboCar1.sColor = glm::vec3(1.0f);
+		uboCar1.mvpMat = Prj * View * World;
+		uboCar1.mMat = World;
+		uboCar1.nMat = glm::inverse(glm::transpose(World));
+		DSCar1.map(currentImage, &uboCar1, sizeof(uboCar1), 0);
+
 		/* A16 */
 		/* fill the uniform block for the room. Identical to the one of the body of the slot machine */
 		/*World = glm::mat4(1);
