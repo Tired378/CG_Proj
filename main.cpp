@@ -97,7 +97,7 @@ class A16 : public BaseProject {
 	/* A16 */
 	/* Add the variable that will contain the model for the room */
 	//Model<VertexVColor> MRoom;
-	//Model<VertexEnv> MEnv;
+	Model<VertexMesh> MEnv;
 
 	//Model<VertexOverlay> MKey, MSplash;
 	DescriptorSet DSGubo;
@@ -105,16 +105,17 @@ class A16 : public BaseProject {
 	/* A16 */
 	/* Add the variable that will contain the Descriptor Set for the room */
 	//DescriptorSet DSRoom;
-	//DescriptorSet DSEnv;
+	DescriptorSet DSEnv;
 
 	//Texture TBody, THandle, TWheel, TKey, TSplash;
+	Texture TEnv;
 	
 	// C++ storage for uniform variables
 	//MeshUniformBlock uboBody, uboHandle, uboWheel1, uboWheel2, uboWheel3;
 	/* A16 */
 	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
 	//MeshUniformBlock uboRoom;
-	//MeshUniformBlock uboEnv;
+	MeshUniformBlock uboEnv;
 
 	GlobalUniformBlock gubo;
 	//OverlayUniformBlock uboKey, uboSplash;
@@ -152,7 +153,7 @@ class A16 : public BaseProject {
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() override {
 		// Descriptor Layouts [what will be passed to the shaders]
-		DSLMesh.init(this, {
+		/*DSLMesh.init(this, {
 					// this array contains the bindings:
 					// first  element : the binding number
 					// second element : the type of element (buffer or texture)
@@ -161,7 +162,17 @@ class A16 : public BaseProject {
 					//                  with the corresponding Vulkan constant
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-				});
+				});*/
+
+		DSLMesh.init(this, {
+				// this array contains the binding:
+				// first  element : the binding number
+				// second element : the type of element (buffer or texture)
+				// third  element : the pipeline stage where it will be used
+				{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
+				{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+				{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+		});
 				
 		/*DSLOverlay.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
@@ -240,7 +251,9 @@ class A16 : public BaseProject {
 		// Third and fourth parameters are respectively the vertex and fragment shaders
 		// The last array, is a vector of pointer to the layouts of the sets that will
 		// be used in this pipeline. The first element will be set 0, and so on...
-		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
+		//PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/MeshFrag.spv", {&DSLGubo, &DSLMesh});
+		PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLMesh});
+		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 		/*POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
 		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
  								    VK_CULL_MODE_NONE, false);*/
@@ -260,7 +273,8 @@ class A16 : public BaseProject {
 		/* A16 */
 		/* load the mesh for the room, contained in OBJ file "Room.obj" */
 		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
-
+		createEnvMesh(MEnv.vertices, MEnv.indices);
+		MEnv.initMesh(this, &VMesh);
 		
 		// Creates a mesh with direct enumeration of vertices and indices
 		/*MKey.vertices = {{{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
@@ -281,6 +295,7 @@ class A16 : public BaseProject {
 		TWheel.init(this,  "textures/SlotWheel.png");
 		TKey.init(this,    "textures/PressSpace.png");
 		TSplash.init(this, "textures/SplashScreen.png");*/
+		TEnv.init(this, "textures/TBs_20140623_1_02.png");
 		
 		// Init local variables
 		CamH = 1.0f;
@@ -300,6 +315,13 @@ class A16 : public BaseProject {
 		//PVColor.create();
 		
 		// Here you define the data set
+		DSEnv.init(this, &DSLMesh, {
+				{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+				{1, UNIFORM, sizeof(GlobalUniformBlock), nullptr},
+				{2, TEXTURE, 0, &TEnv}
+		});
+
+
 		/*DSBody.init(this, &DSLMesh, {
 		// the second parameter, is a pointer to the Uniform Set Layout of this set
 		// the last parameter is an array, with one element per binding of the set.
@@ -364,6 +386,7 @@ class A16 : public BaseProject {
 		/* A16 */
 		/* cleanup the dataset for the room */
 		//DSRoom.cleanup();
+		DSEnv.cleanup();
 
 		/*DSKey.cleanup();
 		DSSplash.cleanup();*/
@@ -381,6 +404,7 @@ class A16 : public BaseProject {
 		TWheel.cleanup();
 		TKey.cleanup();
 		TSplash.cleanup();*/
+		TEnv.cleanup();
 		
 		// Cleanup models
 		/*MBody.cleanup();
@@ -391,6 +415,7 @@ class A16 : public BaseProject {
 		/* A16 */
 		/* Cleanup the mesh for the room */
 		//MRoom.cleanup();
+		MEnv.cleanup();
 		
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
@@ -415,7 +440,7 @@ class A16 : public BaseProject {
 	
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
 		// sets global uniforms (see below for parameters explanation)
-		DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
+		//DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
 
 		// binds the pipeline
 		PMesh.bind(commandBuffer);
@@ -425,7 +450,10 @@ class A16 : public BaseProject {
 		//MBody.bind(commandBuffer);
 		// For a Model object, this command binds the corresponding index and vertex buffer
 		// to the command buffer passed in its parameter
-		
+		MEnv.bind(commandBuffer);
+		DSEnv.bind(commandBuffer, PMesh, 0, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
 		// binds the data set
 		//DSBody.bind(commandBuffer, PMesh, 1, currentImage);
 		// For a Dataset object, this command binds the corresponding dataset
@@ -441,39 +469,6 @@ class A16 : public BaseProject {
 		// the second parameter is the number of indexes to be drawn. For a Model object,
 		// this can be retrieved with the .indices.size() method.
 
-		/*MHandle.bind(commandBuffer);
-		DSHandle.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MHandle.indices.size()), 1, 0, 0, 0);*/
-
-		/*MWheel.bind(commandBuffer);
-		DSWheel1.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
-		DSWheel2.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
-		DSWheel3.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);*/
-		/* A16 */
-		/* Insert the commands to draw the room */
-		/*PVColor.bind(commandBuffer);
-		MRoom.bind(commandBuffer);
-		DSRoom.bind(commandBuffer, PVColor, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);*/
-
-		/*POverlay.bind(commandBuffer);
-		MKey.bind(commandBuffer);
-		DSKey.bind(commandBuffer, POverlay, 0, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MKey.indices.size()), 1, 0, 0, 0);*/
-
-		/*MSplash.bind(commandBuffer);
-		DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);*/
 	}
 
 	// Here is where you update the uniforms.
@@ -515,68 +510,6 @@ class A16 : public BaseProject {
 		static float Wheel2Rot = 0.0;
 		static float Wheel3Rot = 0.0;
 		static float TargetRot = 0.0;	// Target rotation
-
-		//std::cout << gameState << "\n";
-		/*switch(gameState) {		// main state machine implementation
-		  case 0: // initial state - show splash screen
-			if(handleFire) {
-				gameState = 1;	// jump to the wait key state
-			}
-			break;
-		  case 1: // wait key state
-			if(handleFire) {
-				gameState = 2;	// jump to the moving handle state
-			}
-			break;
-		  case 2: // handle moving down state
-			HandleRot += HandleSpeed * deltaT;
-			Wheel1Rot += WheelSpeed * deltaT;
-			Wheel2Rot += WheelSpeed * deltaT;
-			Wheel3Rot += WheelSpeed * deltaT;
-			if(HandleRot > HandleRange) {	// when limit is reached, jump the handle moving up state
-				gameState = 3;
-				HandleRot = HandleRange;
-			}
-			break;
-		  case 3: // handle moving up state
-			HandleRot -= HandleSpeed * deltaT;
-			Wheel1Rot += WheelSpeed * deltaT;
-			Wheel2Rot += WheelSpeed * deltaT;
-			Wheel3Rot += WheelSpeed * deltaT;
-			if(HandleRot < 0.0f) {	// when limit is reached, jump the 3 wheels spinning state
-				gameState = 4;
-				HandleRot = 0.0f;
-				TargetRot = Wheel1Rot + (10 + (float)(rand() % 11)) * SymExtent;
-			}
-			break;
-		  case 4: // 3 wheels spinning state
-			Wheel1Rot += WheelSpeed * deltaT;
-			Wheel2Rot += WheelSpeed * deltaT;
-			Wheel3Rot += WheelSpeed * deltaT;
-			//std::cout << Wheel1Rot << " --- " << TargetRot << "\n";
-			if(Wheel1Rot >= TargetRot) {	// When the target rotation is reached, jump to the next state
-				gameState = 5;
-				Wheel1Rot = round(TargetRot / SymExtent) * SymExtent; // quantize position
-				TargetRot = Wheel2Rot + (10 + (float)(rand() % 11)) * SymExtent;
-			}
-			break;
-		  case 5: // 2 wheels spinning state
-			Wheel2Rot += WheelSpeed * deltaT;
-			Wheel3Rot += WheelSpeed * deltaT;
-			if(Wheel2Rot >= TargetRot) {	// When the target rotation is reached, jump to the next state
-				gameState = 6;
-				Wheel2Rot = round(TargetRot / SymExtent) * SymExtent; // quantize position
-				TargetRot = Wheel3Rot + (10 + (float)(rand() % 11)) * SymExtent;
-			}
-			break;
-		  case 6: // 1 wheels spinning state
-			Wheel3Rot += WheelSpeed * deltaT;
-			if(Wheel3Rot >= TargetRot) {	// When the target rotation is reached, jump to the next state
-				gameState = 1;
-				Wheel3Rot = round(TargetRot / SymExtent) * SymExtent; // quantize position
-			}
-			break;
-		}*/
 		
 		// Parameters
 		// Camera FOV-y, Near Plane and Far Plane
@@ -606,7 +539,7 @@ class A16 : public BaseProject {
 		gubo.eyePos = camPos;
 
 		// Writes value to the GPU
-		DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
+		//DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 		// the .map() method of a DataSet object, requires the current image of the swap chain as first parameter
 		// the second parameter is the pointer to the C++ data structure to transfer to the GPU
 		// the third parameter is its size
@@ -660,15 +593,30 @@ class A16 : public BaseProject {
 		DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);*/
 		/* map the uniform data block to the GPU */
 
+		uboEnv.mMat = glm::scale(glm::mat4(1), glm::vec3(3));
+		uboEnv.mvpMat = Prj * View * uboEnv.mMat;
+		uboEnv.nMat = glm::inverse(glm::transpose(uboEnv.mMat));
+
+
+		//auto World = glm::mat4(1);
+		//uboEnv.amb = 1.0f; uboEnv.gamma = 180.0f; uboEnv.sColor = glm::vec3(1.0f);
+		//uboEnv.mvpMat = Prj * View * World;
+		//uboEnv.mMat = World;
+		//uboEnv.nMat = glm::inverse(glm::transpose(World));
+		DSEnv.map(currentImage, &uboEnv, sizeof(uboEnv), 0);
+		DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
 
 		/*uboKey.visible = (gameState == 1) ? 1.0f : 0.0f;
 		DSKey.map(currentImage, &uboKey, sizeof(uboKey), 0);
 
 		uboSplash.visible = (gameState == 0) ? 1.0f : 0.0f;
 		DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);*/
-	}	
+	}
+
+	void createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
 };
 
+#include "EnvMesh.hpp"
 
 // This is the main: probably you do not need to touch this!
 int main() {
