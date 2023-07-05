@@ -17838,7 +17838,7 @@ class basic_json // NOLINT(cppcoreguidelines-special-member-functions,hicpp-spec
     `copyright` | The copyright line for the library as string.
     `name`      | The name of the library as string.
     `platform`  | The used platform as string. Possible values are `win32`, `linux`, `apple`, `unix`, and `unknown`.
-    `url`       | The URL of the project as string.
+    `url`       | The URL of the Dealership as string.
     `version`   | The version of the library. It is an object with the following keys: `major`, `minor`, and `patch` as defined by [Semantic Versioning](http://semver.org), and `string` (the version string).
 
     @liveexample{The following code shows an example output of the `meta()`
