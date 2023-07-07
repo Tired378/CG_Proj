@@ -306,7 +306,7 @@ class Dealership : public BaseProject {
         // Rotation and motion speed
         const float ROT_SPEED = glm::radians(120.0f);
         // Car showcase radius
-        const float RADIUS = 3.0f;
+        const float RADIUS = 3.5f;
 
         // Integration with the timers and the controllers
         float deltaT;

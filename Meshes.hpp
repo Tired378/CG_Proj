@@ -61,7 +61,7 @@ void Dealership::createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32
 }
 
 void Dealership::createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx) {
-    uint32_t numV = 256;
+    uint32_t numV = 64;
     float initialAngle = 360.0f / (float)numV;
     float currentAngle = 0;
     vDef.push_back({{0.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}});	// vertex 0 - center
