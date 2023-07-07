@@ -202,7 +202,7 @@ class Dealership : public BaseProject {
 
 		// Create the textures
 		// The second parameter is the file name
-		TEnv.init(this, "textures/TBs_20140623_1_02.png");
+		TEnv.init(this, "textures/TextureRoom.jpg");
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
