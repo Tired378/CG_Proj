@@ -63,38 +63,44 @@ class Dealership : public BaseProject {
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
 	//DescriptorSetLayout DSLGubo;
-	DescriptorSetLayout DSLMesh;
+	DescriptorSetLayout DSLMesh, DSLShow;
 
 	// Vertex formats
-	VertexDescriptor VMesh;
+	VertexDescriptor VMesh, VShow;
 
 	// Pipelines [Shader couples]
-	Pipeline PMesh;
+	Pipeline PMesh, PShow;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
-	Model<VertexMesh> MEnv;
+	Model<VertexMesh> MEnv, MShow;
+    //TODO: define car models array
 
 	//DescriptorSet DSGubo;
-	DescriptorSet DSEnv;
+	DescriptorSet DSEnv, DSShow;
 
-	Texture TEnv;
+	Texture TEnv, TShow;
 	
 	// C++ storage for uniform variables
-    UniformBufferObject uboEnv;
+    UniformBufferObject uboEnv, uboShow;
     GlobalUniformBufferObject gubo;
 
     // Other application parameters
-    int currScene = 0;
-    int NumCars = 0;
+    int currCarModel = 0;
+    int NumCars = 0; //TODO: set to car models array length
     glm::mat4 ViewPrj;
     glm::vec3 Pos = glm::vec3(6.0f,1.0f,10.0f); // Initial spawn location
     glm::vec3 PrevPos = Pos;
+    glm::vec3 CarSpawnPos = glm::vec3(6.0f,0.0f,6.0f);
     glm::vec3 cameraPos;
+    // Initial camera angles
     float Yaw = glm::radians(0.0f);
-    float PrevYaw = Yaw;
+    //float PrevYaw = Yaw;
     float Pitch = glm::radians(0.0f); //22.5f
     float Roll = glm::radians(0.0f);
     float MOVE_SPEED = 2.0f;
+    // Showcase platform parameters
+    const float ShowRotSpeed = glm::radians(-5.0f);
+    float ShowRot = 0.0f;
 
 	// Here you set the main application parameters
 	void setWindowParameters() override {
@@ -108,9 +114,9 @@ class Dealership : public BaseProject {
 		// Descriptor pool sizes
 		/* Dealership */
 		/* Update the requirements for the size of the pool */
-		uniformBlocksInPool = 7;
-		texturesInPool = 4;
-		setsInPool = 4;
+		uniformBlocksInPool = 9;
+		texturesInPool = 9;
+		setsInPool = 9;
 		
 		Ar = (float)windowWidth / (float)windowHeight;
 	}
@@ -144,10 +150,16 @@ class Dealership : public BaseProject {
 				{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 				{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 		});
-				
-		/*DSLGubo.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
-				});*/
+
+        DSLShow.init(this, {
+                // this array contains the binding:
+                // first  element : the binding number
+                // second element : the type of element (buffer or texture)
+                // third  element : the pipeline stage where it will be used
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
+                {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+                {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+        });
 
 		// Vertex descriptors
 		VMesh.init(this, {
@@ -161,16 +173,33 @@ class Dealership : public BaseProject {
 				         sizeof(glm::vec2), UV}
 				});
 
-		// Pipelines [Shader couples]
+        VShow.init(this, {
+                {0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
+        }, {
+                           {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
+                                   sizeof(glm::vec3), POSITION},
+                           {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
+                                   sizeof(glm::vec3), NORMAL},
+                           {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
+                                   sizeof(glm::vec2), UV}
+                   });
+
+        // Pipelines [Shader couples]
 		PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLMesh});
 		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
+
+        PShow.init(this, &VShow, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLShow});
+        PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
 		// Models, textures and Descriptors (values assigned to the uniforms)
 
 		// Create models
 		createEnvMesh(MEnv.vertices, MEnv.indices);
 		MEnv.initMesh(this, &VMesh);
-		
+
+        createShowcaseMesh(MShow.vertices, MShow.indices);
+        MShow.initMesh(this, &VShow);
+
 		// Create the textures
 		// The second parameter is the file name
 		TEnv.init(this, "textures/TBs_20140623_1_02.png");
@@ -180,6 +209,7 @@ class Dealership : public BaseProject {
 	void pipelinesAndDescriptorSetsInit() override {
 		// This creates a new pipeline (with the current surface), using its shaders
 		PMesh.create();
+        PShow.create();
 
 		// Here you define the data set
 		DSEnv.init(this, &DSLMesh, {
@@ -187,6 +217,12 @@ class Dealership : public BaseProject {
 				{1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
 				{2, TEXTURE, 0, &TEnv}
 		});
+
+        DSShow.init(this, &DSLShow, {
+                {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+                {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
+                {2, TEXTURE, 0, &TEnv}
+        });
 
 		/*DSGubo.init(this, &DSLGubo, {
 					{0, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
@@ -198,8 +234,10 @@ class Dealership : public BaseProject {
 	void pipelinesAndDescriptorSetsCleanup() override {
 		// Cleanup pipelines
 		PMesh.cleanup();
+        PShow.cleanup();
 
 		DSEnv.cleanup();
+        DSShow.cleanup();
 		//DSGubo.cleanup();
 	}
 
@@ -210,16 +248,20 @@ class Dealership : public BaseProject {
 	void localCleanup() override {
 		// Cleanup textures
 		TEnv.cleanup();
+        TShow.cleanup();
 		
 		// Cleanup models
 		MEnv.cleanup();
+        MShow.cleanup();
 		
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
+        DSLShow.cleanup();
 		//DSLGubo.cleanup();
 		
 		// Destroys the pipelines
 		PMesh.destroy();
+        PShow.destroy();
 	}
 	
 	// Here it is the creation of the command buffer:
@@ -227,7 +269,7 @@ class Dealership : public BaseProject {
 	// with their buffers and textures
 	
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
-		//TODO: add currScene switch to switch between car models
+		//TODO: add currCarModel switch to switch between car models
 
 		// binds the pipeline
 		PMesh.bind(commandBuffer);
@@ -239,12 +281,18 @@ class Dealership : public BaseProject {
 		DSEnv.bind(commandBuffer, PMesh, 0, currentImage); //TODO: figure how what the setID does
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
-	}
+
+        PShow.bind(commandBuffer);
+        MShow.bind(commandBuffer);
+        DSShow.bind(commandBuffer, PShow, 0, currentImage); //TODO: figure how what the setID does
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MShow.indices.size()), 1, 0, 0, 0);
+    }
 
     void GameLogic() {
         // Parameters
         // Camera FOV-y, Near Plane and Far Plane
-        const float FOVy = glm::radians(90.0f);
+        const float FOVy = glm::radians(60.0f);
         const float nearPlane = 0.1f;
         const float farPlane = 100.f;
         // Camera target height and distance
@@ -253,8 +301,12 @@ class Dealership : public BaseProject {
         // Camera Pitch limits
         const float minPitch = glm::radians(-60.0f);
         const float maxPitch = glm::radians(60.0f);
+        const float minRoll = glm::radians(-30.0f);
+        const float maxRoll = glm::radians(30.0f);
         // Rotation and motion speed
         const float ROT_SPEED = glm::radians(120.0f);
+        // Car showcase radius
+        const float RADIUS = 3.0f;
 
         // Integration with the timers and the controllers
         float deltaT;
@@ -263,9 +315,10 @@ class Dealership : public BaseProject {
         getSixAxis(deltaT, m, r, fire);
 
         // Game Logic implementation
-        // Current Player Position - static variable make sure its value remain unchanged in subsequent calls to the procedure
 
-        // To be done in the assignment
+        // Showcase platform rotation
+        ShowRot += ShowRotSpeed * deltaT;
+
         ViewPrj = glm::mat4(1);
         glm::mat4 World = glm::mat4(1);
 
@@ -278,14 +331,17 @@ class Dealership : public BaseProject {
         Pos = Pos + MOVE_SPEED * m.x * ux * deltaT;
         if (Pos.x < 1.0f) Pos.x = 1.0f;
         else if (Pos.x > 11.0f) Pos.x = 11.0f;
-        Pos = Pos + MOVE_SPEED * m.y * glm::vec3(0,1,0) * deltaT;
+        //Pos = Pos + MOVE_SPEED * m.y * glm::vec3(0,1,0) * deltaT;
         //Pos.y = Pos.y < 0.0f ? 0.0f : Pos.y;
         Pos.y = 0.0f;
         Pos = Pos + MOVE_SPEED * m.z * uz * deltaT;
         if (Pos.z < 1.0f) Pos.z = 1.0f;
         else if (Pos.z > 11.0f) Pos.z = 11.0f; // was 12.0f
 
-        if (Pos != PrevPos) std::cout << "Pos = (" << Pos.x << ", " << Pos.y << ", " << Pos.z << ")" << std::endl;
+        // Collision check with the car showcase
+        if (glm::distance(CarSpawnPos, Pos) < RADIUS) Pos = PrevPos;
+
+        //if (Pos != PrevPos) std::cout << "Pos = (" << Pos.x << ", " << Pos.y << ", " << Pos.z << ")" << std::endl;
         PrevPos = Pos;
 
         // Rotation
@@ -313,9 +369,9 @@ class Dealership : public BaseProject {
         Pitch = Pitch + ROT_SPEED * deltaT * r.x;
         Pitch  =  Pitch < minPitch ? minPitch :
                   (Pitch > maxPitch ? maxPitch : Pitch);
-        Roll   = Roll   - ROT_SPEED * deltaT * r.z;
-        Roll   = Roll < glm::radians(-175.0f) ? glm::radians(-175.0f) :
-                 (Roll > glm::radians( 175.0f) ? glm::radians( 175.0f) : Roll);
+        Roll   = Roll - ROT_SPEED * deltaT * r.z;
+        Roll   = Roll < minRoll ? minRoll :
+                 (Roll > maxRoll ? maxRoll : Roll);
 
         // Final world matrix computation
         World = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
@@ -348,13 +404,13 @@ class Dealership : public BaseProject {
 
         static bool debounce = false;
         static int curDebounce = 0;
-        // Switch currScene on specific key press
+        // Switch currCarModel on specific key press
         /*if(glfwGetKey(window, GLFW_KEY_N)) {
             if(!debounce) {
                 debounce = true;
                 curDebounce = GLFW_KEY_SPACE;
-                currScene = (currScene+1) % NumCars;
-                std::cout << "Scene : " << currScene << "\n";
+                currCarModel = (currCarModel+1) % NumCars;
+                std::cout << "Scene : " << currCarModel << "\n";
                 RebuildPipeline();
             }
         } else {
@@ -367,8 +423,8 @@ class Dealership : public BaseProject {
             if(!debounce) {
                 debounce = true;
                 curDebounce = GLFW_KEY_SPACE;
-                currScene = (currScene-1) % NumCars;
-                std::cout << "Scene : " << currScene << "\n";
+                currCarModel = (currCarModel-1) % NumCars;
+                std::cout << "Scene : " << currCarModel << "\n";
                 RebuildPipeline();
             }
         } else {
@@ -381,34 +437,6 @@ class Dealership : public BaseProject {
         //TODO: riscrivere lo shader rimuovendo la necessità per questo codice
         static bool showNormal = false;
         static bool showUV = false;
-
-        /*if(glfwGetKey(window, GLFW_KEY_N)) {
-            if(!debounce) {
-                debounce = true;
-                curDebounce = GLFW_KEY_N;
-                showNormal = !showNormal;
-                showUV = false;
-            }
-        } else {
-            if((curDebounce == GLFW_KEY_N) && debounce) {
-                debounce = false;
-                curDebounce = 0;
-            }
-        }
-
-        if(glfwGetKey(window, GLFW_KEY_U)) {
-            if(!debounce) {
-                debounce = true;
-                curDebounce = GLFW_KEY_U;
-                showNormal = false;
-                showUV = !showUV;
-            }
-        } else {
-            if((curDebounce == GLFW_KEY_U) && debounce) {
-                debounce = false;
-                curDebounce = 0;
-            }
-        }*/
 
         // Hold SHIFT to run
         if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) {
@@ -437,14 +465,24 @@ class Dealership : public BaseProject {
 		uboEnv.mvpMat = ViewPrj * uboEnv.mMat;
 		uboEnv.nMat = glm::inverse(glm::transpose(uboEnv.mMat));
 
-		DSEnv.map(currentImage, &uboEnv, sizeof(uboEnv), 0);
-        DSEnv.map(currentImage, &gubo, sizeof(gubo), 1);
+        uboShow.mMat = glm::rotate(glm::translate(glm::mat4(1.0f),
+                                   glm::vec3(6.0f, 0.0f, 6.0f)),ShowRot,
+                                   glm::vec3(0,1,0));
+        uboShow.mvpMat = ViewPrj * uboShow.mMat;
+        uboShow.nMat = glm::inverse(glm::transpose(uboShow.mMat));
+
+        // Mapping of the room
+		DSEnv.map((int)currentImage, &uboEnv, sizeof(uboEnv), 0);
+        DSEnv.map((int)currentImage, &gubo, sizeof(gubo), 1);
+        // Mapping of the Showcase platform
+        DSShow.map((int)currentImage, &uboShow, sizeof(uboShow), 0);
+        DSShow.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
         //TODO: add switch between different car models
         // the room needs to stay the same!
         // Maybe through an array of DSs we can retrieve the correct model right await
         // substituting the switch.
-        /*switch(currScene) {
+        /*switch(currCarModel) {
             case 0:
                 DS1.map(currentImage, &ubo, sizeof(ubo), 0);
                 DS1.map(currentImage, &gubo, sizeof(gubo), 1);
@@ -457,9 +495,10 @@ class Dealership : public BaseProject {
 	}
 
 	static void createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
+    static void createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
 };
 
-#include "EnvMesh.hpp"
+#include "Meshes.hpp"
 
 // This is the main: probably you do not need to touch this!
 int main() {

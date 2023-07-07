@@ -59,3 +59,49 @@ void Dealership::createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32
 	vIdx.push_back(20); vIdx.push_back(21); vIdx.push_back(22);	// First triangle
 	vIdx.push_back(21); vIdx.push_back(22); vIdx.push_back(23);	// Second triangle
 }
+
+void Dealership::createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx) {
+    uint32_t numV = 256;
+    float initialAngle = 360.0f / (float)numV;
+    float currentAngle = 0;
+    vDef.push_back({{0.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}});	// vertex 0 - center
+    vDef.push_back({{0.0f, 0.1f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}});	// vertex 0 - center
+
+    for (uint32_t i = 0; i < numV; i++) {
+        vDef.push_back({{3.5*cos(glm::radians(currentAngle)),
+                              0.0f,
+                              3.5*sin(glm::radians(currentAngle))},
+                        {0.0f, -1.0f, 0.0f}, {0.0f, 0.0f}});	// bottom circumference, y normal
+        vDef.push_back({{3.5*cos(glm::radians(currentAngle)),
+                              0.0f,
+                              3.5*sin(glm::radians(currentAngle))},
+                        {cos(glm::radians(currentAngle)),
+                              0.0f,
+                              sin(glm::radians(currentAngle))}, {0.0f, 0.0f}});
+        vDef.push_back({{3.5*cos(glm::radians(currentAngle)),
+                              0.1f,
+                              3.5*sin(glm::radians(currentAngle))},
+                        {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}});	// top circumference, y normal
+        vDef.push_back({{3.5*cos(glm::radians(currentAngle)),
+                              0.1f,
+                              3.5*sin(glm::radians(currentAngle))},
+                        {cos(glm::radians(currentAngle)),
+                              0.0f,
+                              sin(glm::radians(currentAngle))}, {0.0f, 0.0f}});
+        currentAngle += initialAngle;
+    }
+
+    for (uint32_t i = 0; i < numV*4-4; i=i+4) {
+        vIdx.push_back(0); vIdx.push_back(i+2); vIdx.push_back(i+6);	// First triangle
+        vIdx.push_back(1); vIdx.push_back(i+4); vIdx.push_back(i+8);	// First triangle
+
+        vIdx.push_back(i+3); vIdx.push_back(i+5); vIdx.push_back(i+7);	// First triangle
+        vIdx.push_back(i+7); vIdx.push_back(i+9); vIdx.push_back(i+5);	// First triangle
+    }
+
+    vIdx.push_back(0); vIdx.push_back(vDef.size()-4); vIdx.push_back(2);
+    vIdx.push_back(1); vIdx.push_back(vDef.size()-2); vIdx.push_back(4);
+
+    vIdx.push_back(vDef.size()-3); vIdx.push_back(vDef.size()-1); vIdx.push_back(3);
+    vIdx.push_back(5); vIdx.push_back(vDef.size()-1); vIdx.push_back(3);
+}
