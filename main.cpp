@@ -31,106 +31,80 @@ struct GlobalUniformBlock {
 	alignas(16) glm::vec3 eyePos;
 };
 
-// The vertices data structures
-struct VertexMesh {
-	glm::vec3 pos;
-	glm::vec3 norm;
-	glm::vec2 UV;
+struct UniformBufferObject {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
 };
 
-/*struct VertexOverlay {
-	glm::vec2 pos;
-	glm::vec2 UV;
-};*/
+//TODO: riscrivere lo shader rimuovendo la necessità per il selector
+struct GlobalUniformBufferObject {
+    alignas(16) glm::vec3 selector;
+    alignas(16) glm::vec3 lightDir;
+    alignas(16) glm::vec4 lightColor;
+    alignas(16) glm::vec3 eyePos;
+};
 
-/* A16 */
-/* Add the C++ data structure for the required vertex format */
-/*struct VertexVColor {
-	glm::vec3 pos;
-	glm::vec3 norm;
-	glm::vec3 color;
-};*/
-
-/*struct VertexEnv {
-	glm::vec3 pos;
-	glm::vec3 norm;
-};*/
-
-
-
+struct VertexMesh {
+    alignas(16) glm::vec3 pos;
+    alignas(16) glm::vec3 norm;
+    alignas(8) glm::vec2 UV;
+};
 
 // MAIN ! 
-class A16 : public BaseProject {
+class Dealership : public BaseProject {
 	protected:
 
-	// Current aspect ratio (used by the callback that resized the window)
+	// Current aspect ratio (used by the callback that resized the window
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLGubo;
-	DescriptorSetLayout DSLMesh;
-	//DescriptorSetLayout DSLOverlay;
-	/* A16 */
-	/* Add the variable that will contain the required Descriptor Set Layout */
-	//DescriptorSetLayout DSLVColor;
-	//DescriptorSetLayout DSLEnv;
+	DescriptorSetLayout DSLMesh, DSLShow, DSLGubo, DSLEnv;
 
 	// Vertex formats
-	VertexDescriptor VMesh;
-	//VertexDescriptor VOverlay;
-	/* A16 */
-	/* Add the variable that will contain the required Vertex format definition */
-	//VertexDescriptor VVColor;
-	//VertexDescriptor VEnv;
+	VertexDescriptor VMesh, VShow;
 
 	// Pipelines [Shader couples]
-	Pipeline PMesh;
-	//Pipeline POverlay;
-	/* A16 */
-	/* Add the variable that will contain the new pipeline */
-	//Pipeline PVColor;
-	//Pipeline PEnv;
+	Pipeline PMesh, PShow, PCar;
+
+	DescriptorSet DSEnv, DSShow, DSGubo;
+	DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
-	// Please note that Model objects depends on the corresponding vertex structure
-	//Model<VertexMesh> MBody, MHandle, MWheel;
-	Model<VertexMesh> MCar1, MCar2, MCar3, MCar4, MCar5;
-	/* A16 */
-	/* Add the variable that will contain the model for the room */
-	//Model<VertexVColor> MRoom;
-	//Model<VertexEnv> MEnv;
+	Model<VertexMesh> MEnv, MShow, MCar1, MCar2, MCar3, MCar4, MCar5;
+    //TODO: define car models array
 
-	//Model<VertexOverlay> MKey, MSplash;
-	DescriptorSet DSGubo;
-	//DescriptorSet DSBody, DSHandle, DSWheel1, DSWheel2, DSWheel3, DSKey, DSSplash;
-	DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
-	/* A16 */
-	/* Add the variable that will contain the Descriptor Set for the room */
-	//DescriptorSet DSRoom;
-	//DescriptorSet DSEnv;
+	// C++ storage for uniform variables
+	MeshUniformBlock uboCar;
+	UniformBufferObject uboEnv, uboShow;
 
-	//Texture TBody, THandle, TWheel, TKey, TSplash;
+	GlobalUniformBlock gub;
+    GlobalUniformBufferObject gubo;
+
+	Texture TEnv, TShow;
 	Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
 	Texture TCar2_0, TCar2_1, TCar2_2, TCar2_3;
 	Texture TCar3_0, TCar3_1, TCar3_2, TCar3_3;
 	Texture TCar4_0, TCar4_1, TCar4_2, TCar4_3;
 	Texture TCar5_0, TCar5_1, TCar5_2, TCar5_3;
-	
-	// C++ storage for uniform variables
-	//MeshUniformBlock uboBody, uboHandle, uboWheel1, uboWheel2, uboWheel3;
-	MeshUniformBlock uboCar;
-	/* A16 */
-	/* Add the variable that will contain the Uniform Block in slot 0, set 1 of the room */
-	//MeshUniformBlock uboRoom;
-	//MeshUniformBlock uboEnv;
 
-	GlobalUniformBlock gubo;
-	//OverlayUniformBlock uboKey, uboSplash;
-
-	// Other application parameters
-	float CamH, CamRadius, CamPitch, CamYaw;
-	//int gameState;
-
+    // Other application parameters
+    int currCarModel = 0;
+    int NumCars = 5; //TODO: set to car models array length
+    glm::mat4 ViewPrj;
+    glm::vec3 Pos = glm::vec3(6.0f,1.0f,10.0f); // Initial spawn location
+    glm::vec3 PrevPos = Pos;
+    glm::vec3 CarSpawnPos = glm::vec3(6.0f,0.0f,6.0f);
+    glm::vec3 cameraPos;
+    // Initial camera angles
+    float Yaw = glm::radians(0.0f);
+    //float PrevYaw = Yaw;
+    float Pitch = glm::radians(0.0f); //22.5f
+    float Roll = glm::radians(0.0f);
+    float MOVE_SPEED = 2.0f;
+    // Showcase platform parameters
+    const float ShowRotSpeed = glm::radians(-5.0f);
+    float ShowRot = 0.0f;
 
 	// Here you set the main application parameters
 	void setWindowParameters() override {
@@ -142,7 +116,7 @@ class A16 : public BaseProject {
 		initialBackgroundColor = {0.0f, 0.005f, 0.01f, 1.0f};
 		
 		// Descriptor pool sizes
-		/* A16 */
+		/* Dealership */
 		/* Update the requirements for the size of the pool */
 		uniformBlocksInPool = 28;
 		texturesInPool = 27;
@@ -160,63 +134,31 @@ class A16 : public BaseProject {
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() override {
 		// Descriptor Layouts [what will be passed to the shaders]
+		//TODO: Test
 		DSLMesh.init(this, {
-					// this array contains the bindings:
-					// first  element : the binding number
-					// second element : the type of element (buffer or texture)
-					//                  using the corresponding Vulkan constant
-					// third  element : the pipeline stage where it will be used
-					//                  with the corresponding Vulkan constant
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 				});
-				
-		/*DSLOverlay.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-				});*/
-		/* A16 */
-		/* Init the new Data Set Layout */
-		/*DSLVColor.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
-			});*/
-				
-		DSLGubo.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
+
+		DSLEnv.init(this, {
+					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
+					{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 				});
+
+        DSLShow.init(this, {
+                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
+                {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+                {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+        });
 
 		// Vertex descriptors
 		VMesh.init(this, {
-				  // this array contains the bindings
-				  // first  element : the binding number
-				  // second element : the stride of this binging
-				  // third  element : whether this parameter change per vertex or per instance
-				  //                  using the corresponding Vulkan constant
 				  {0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
 				}, {
-				  // this array contains the location
-				  // first  element : the binding number
-				  // second element : the location number
-				  // third  element : the offset of this element in the memory record
-				  // fourth element : the data type of the element
-				  //                  using the corresponding Vulkan constant
-				  // fifth  element : the size in byte of the element
-				  // sixth  element : a constant defining the element usage
-				  //                   POSITION - a vec3 with the position
-				  //                   NORMAL   - a vec3 with the normal vector
-				  //                   UV       - a vec2 with a UV coordinate
-				  //                   COLOR    - a vec4 with an RGBA color
-				  //                   TANGENT  - a vec4 with the tangent vector
-				  //                   OTHER    - anything else
-				  //
-				  // ***************** DOUBLE CHECK ********************
-				  //    That the Vertex data structure you use in the "offsetof" and
-				  //	in the "sizeof" in the previous array, refers to the correct one,
-				  //	if you have more than one vertex format!
-				  // ***************************************************
 				  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
 				         sizeof(glm::vec3), POSITION},
 				  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
@@ -225,152 +167,92 @@ class A16 : public BaseProject {
 				         sizeof(glm::vec2), UV}
 				});
 
-		/*VOverlay.init(this, {
-				  {0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}
-				}, {
-				  {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, pos),
-				         sizeof(glm::vec2), OTHER},
-				  {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, UV),
-				         sizeof(glm::vec2), UV}
-				});*/
-		/* A16 */
-		/* Define the new Vertex Format */
-		/*VVColor.init(this, {
-				  {0, sizeof(VertexVColor), VK_VERTEX_INPUT_RATE_VERTEX}
-			}, {
-			  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, pos),
-					 sizeof(glm::vec3), POSITION},
-			  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, norm),
-					 sizeof(glm::vec3), NORMAL},
-			  {0, 2,  VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexVColor, color),
-					 sizeof(glm::vec3), COLOR}
-			});*/
+        VShow.init(this, {
+                {0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
+        }, {
+                   {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
+                           sizeof(glm::vec3), POSITION},
+                   {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
+                           sizeof(glm::vec3), NORMAL},
+                   {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
+                           sizeof(glm::vec2), UV}
+               });
+
+		DSLGubo.init(this,{
+					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
+			   });
 
 		// Pipelines [Shader couples]
-		// The second parameter is the pointer to the vertex definition
-		// Third and fourth parameters are respectively the vertex and fragment shaders
-		// The last array, is a vector of pointer to the layouts of the sets that will
-		// be used in this pipeline. The first element will be set 0, and so on...
-		PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLMesh});
+		PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLMesh});
 														//shaders/BlinnNormMapFrag.spv -- MeshFrag.spv
-		/*POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
-		POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
- 								    VK_CULL_MODE_NONE, false);*/
-		/* A16 */
-		/* Create the new pipeline, using shaders "VColorVert.spv" and "VColorFrag.spv" */
-		//PVColor.init(this, &VVColor, "shaders/VColorVert.spv", "shaders/VColorFrag.spv", { &DSLGubo, &DSLVColor });
+		PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLEnv});
+		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
-		// Models, textures and Descriptors (values assigned to the uniforms)
+        PShow.init(this, &VShow, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLShow});
+        PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
-		// Create models
-		// The second parameter is the pointer to the vertex definition for this model
-		// The third parameter is the file name
-		// The last is a constant specifying the file type: currently only OBJ or GLTF
-		/*MBody.init(this,   &VMesh, "Models/SlotBody.obj", OBJ);
-		MHandle.init(this, &VMesh, "Models/SlotHandle.obj", OBJ);
-		MWheel.init(this,  &VMesh, "Models/SlotWheel.obj", OBJ);*/
-		/* A16 */
-		/* load the mesh for the room, contained in OBJ file "Room.obj" */
-		//MRoom.init(this, &VVColor, "Models/Room.obj", OBJ);
+		/* Models */
+		createEnvMesh(MEnv.vertices, MEnv.indices);
+		MEnv.initMesh(this, &VMesh);
 
-		/* Cars */
+        createShowcaseMesh(MShow.vertices, MShow.indices);
+        MShow.initMesh(this, &VShow);
+
 		MCar1.init(this, &VMesh, "Models/Car1.gltf", GLTF);
 		MCar2.init(this, &VMesh, "Models/Car2.obj", OBJ);
 		MCar3.init(this, &VMesh, "Models/Car3.obj", OBJ);
 		MCar4.init(this, &VMesh, "Models/Car4.obj", OBJ);
 		MCar5.init(this, &VMesh, "Models/Car5.obj", OBJ);
 
-		
-		// Creates a mesh with direct enumeration of vertices and indices
-		/*MKey.vertices = {{{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
-						 {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}}};
-		MKey.indices = {0, 1, 2,    1, 2, 3};
-		MKey.initMesh(this, &VOverlay);*/
-		
-		// Creates a mesh with direct enumeration of vertices and indices
-		/*MSplash.vertices = {{{-1.0f, -0.58559f}, {0.0102f, 0.0f}}, {{-1.0f, 0.58559f}, {0.0102f,0.85512f}},
-						 {{ 1.0f,-0.58559f}, {1.0f,0.0f}}, {{ 1.0f, 0.58559f}, {1.0f,0.85512f}}};
-		MSplash.indices = {0, 1, 2,    1, 2, 3};
-		MSplash.initMesh(this, &VOverlay);*/
-		
-		// Create the textures
-		// The second parameter is the file name
-		/*TBody.init(this,   "textures/SlotBody.png");
-		THandle.init(this, "textures/SlotHandle.png");
-		TWheel.init(this,  "textures/SlotWheel.png");
-		TKey.init(this,    "textures/PressSpace.png");
-		TSplash.init(this, "textures/SplashScreen.png");
-
-		/* Cars */
+		/* Textures */
 		TCar1_0.init(this, "textures/Car1/cb_car_baseColor.png");
 		TCar1_1.init(this, "textures/Car1/cb_car_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
 		TCar1_2.init(this, "textures/Car1/cb_car_metallicRoughness.png", VK_FORMAT_R8G8B8A8_UNORM);
 		TCar1_3.init(this, "textures/Car1/cb_car_emissive.png", VK_FORMAT_R8G8B8A8_UNORM);
 
 		TCar2_0.init(this, "textures/Car2/baseColor.png");
-		TCar2_1.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+		/*TCar2_1.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
 		TCar2_2.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar2_3.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+		TCar2_3.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
 		TCar3_0.init(this, "textures/Car3/baseColor.png");
-		TCar3_1.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+		/*TCar3_1.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
 		TCar3_2.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar3_3.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+		TCar3_3.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
 		TCar4_0.init(this, "textures/Car4/baseColor.png");
-		TCar4_1.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+		/*TCar4_1.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
 		TCar4_2.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar4_3.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+		TCar4_3.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
 		TCar5_0.init(this, "textures/Car5/baseColor.png");
-		TCar5_1.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+		/*TCar5_1.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
 		TCar5_2.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar5_3.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		
-		// Init local variables
-		CamH = 1.0f;
-		CamRadius = 3.0f;
-		CamPitch = glm::radians(15.f);
-		CamYaw = glm::radians(30.f);
-		//gameState = 0;
+		TCar5_3.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
+
+		TEnv.init(this, "textures/TextureRoom.jpg");
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsInit() override {
 		// This creates a new pipeline (with the current surface), using its shaders
 		PMesh.create();
-		/*POverlay.create();*/
-		/* A16 */
-		/* Create the new pipeline */
-		//PVColor.create();
-		
+		PShow.create();
+		PCar.create();
+
 		// Here you define the data set
-		/*DSBody.init(this, &DSLMesh, {
-		// the second parameter, is a pointer to the Uniform Set Layout of this set
-		// the last parameter is an array, with one element per binding of the set.
-		// first  element : the binding number
-		// second element : UNIFORM or TEXTURE (an enum) depending on the type
-		// third  element : only for UNIFORMS, the size of the corresponding C++ object. For texture, just put 0
-		// fourth element : only for TEXTURES, the pointer to the corresponding texture object. For uniforms, use nullptr
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TBody}
-				});
-		DSHandle.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &THandle}
-				});
-		DSWheel1.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TWheel}
-				});
-		DSWheel2.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TWheel}
-				});
-		DSWheel3.init(this, &DSLMesh, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TWheel}
-				});*/
+		DSEnv.init(this, &DSLEnv, {
+				{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+				{1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
+				{2, TEXTURE, 0, &TEnv}
+		});
+
+		DSShow.init(this, &DSLShow, {
+				{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+				{1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
+				{2, TEXTURE, 0, &TEnv}
+		});
+
 		DSCar1.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar1_0},
@@ -378,60 +260,47 @@ class A16 : public BaseProject {
 					{3, TEXTURE, 0, &TCar1_2},
 					{4, TEXTURE, 0, &TCar1_3}
 
-			});
+		});
 
 		DSCar2.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar2_0},
-					{2, TEXTURE, 0, &TCar2_1},
-					{3, TEXTURE, 0, &TCar2_2},
-					{4, TEXTURE, 0, &TCar2_3}
+					{2, TEXTURE, 0, &TCar2_0},
+					{3, TEXTURE, 0, &TCar2_0},
+					{4, TEXTURE, 0, &TCar2_0}
 
 			});
 
 		DSCar3.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar3_0},
-					{2, TEXTURE, 0, &TCar3_1},
-					{3, TEXTURE, 0, &TCar3_2},
-					{4, TEXTURE, 0, &TCar3_3}
+					{2, TEXTURE, 0, &TCar3_0},
+					{3, TEXTURE, 0, &TCar3_0},
+					{4, TEXTURE, 0, &TCar3_0}
 
 			});
 
 		DSCar4.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar4_0},
-					{2, TEXTURE, 0, &TCar4_1},
-					{3, TEXTURE, 0, &TCar4_2},
-					{4, TEXTURE, 0, &TCar4_3}
+					{2, TEXTURE, 0, &TCar4_0},
+					{3, TEXTURE, 0, &TCar4_0},
+					{4, TEXTURE, 0, &TCar4_0}
 
 			});
 		
 		DSCar5.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar5_0},
-					{2, TEXTURE, 0, &TCar5_1},
-					{3, TEXTURE, 0, &TCar5_2},
-					{4, TEXTURE, 0, &TCar5_3}
+					{2, TEXTURE, 0, &TCar5_0},
+					{3, TEXTURE, 0, &TCar5_0},
+					{4, TEXTURE, 0, &TCar5_0}
 
 			});
-		/* A16 */
-		/* Define the data set for the room */
-		/*DSRoom.init(this, &DSLVColor, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr}
-			});*/
 
-		/*DSKey.init(this, &DSLOverlay, {
-					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TKey}
-				});
-		DSSplash.init(this, &DSLOverlay, {
-					{0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TSplash}
-				});*/
 		DSGubo.init(this, &DSLGubo, {
-					{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
-				});
+					{0, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
+			});
 	}
 
 	// Here you destroy your pipelines and Descriptor Sets!
@@ -439,29 +308,18 @@ class A16 : public BaseProject {
 	void pipelinesAndDescriptorSetsCleanup() override {
 		// Cleanup pipelines
 		PMesh.cleanup();
-		/*POverlay.cleanup();*/
-		/* A16 */
-		/* cleanup the new pipeline */
-		//PVColor.cleanup();
+        PShow.cleanup();
+		PCar.cleanup();
 
-		// Cleanup datasets
-		/*DSBody.cleanup();
-		DSHandle.cleanup();
-		DSWheel1.cleanup();
-		DSWheel2.cleanup();
-		DSWheel3.cleanup();*/
-		/* A16 */
-		/* cleanup the dataset for the room */
-		//DSRoom.cleanup();
-
-		/*DSKey.cleanup();
-		DSSplash.cleanup();*/
 		DSCar1.cleanup();
 		DSCar2.cleanup();
 		DSCar3.cleanup();
 		DSCar4.cleanup();
 		DSCar5.cleanup();
 		DSGubo.cleanup();
+
+		DSEnv.cleanup();
+        DSShow.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -470,11 +328,6 @@ class A16 : public BaseProject {
 	// methods: .cleanup() recreates them, while .destroy() delete them completely
 	void localCleanup() override {
 		// Cleanup textures
-		/*TBody.cleanup();
-		THandle.cleanup();
-		TWheel.cleanup();
-		TKey.cleanup();
-		TSplash.cleanup();*/
 		TCar1_0.cleanup();
 		TCar1_1.cleanup();
 		TCar1_2.cleanup();
@@ -499,131 +352,212 @@ class A16 : public BaseProject {
 		TCar5_1.cleanup();
 		TCar5_2.cleanup();
 		TCar5_3.cleanup();
-		
+
+		TEnv.cleanup();
+        TShow.cleanup();
+
 		// Cleanup models
-		/*
-		MBody.cleanup();
-		MHandle.cleanup();
-		MWheel.cleanup();
-		MKey.cleanup();
-		MSplash.cleanup();*/
 		MCar1.cleanup();
 		MCar2.cleanup();
 		MCar3.cleanup();
 		MCar4.cleanup();
 		MCar5.cleanup();
-		/* A16 */
-		/* Cleanup the mesh for the room */
-		//MRoom.cleanup();
-		
+		MEnv.cleanup();
+        MShow.cleanup();
+
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
-		/*DSLOverlay.cleanup();*/
-		/* A16 */
-		/* Cleanup the new Descriptor Set Layout */
-		//DSLVColor.cleanup();
-
+        DSLShow.cleanup();
 		DSLGubo.cleanup();
+		DSLEnv.cleanup();
 		
 		// Destroys the pipelines
 		PMesh.destroy();
-		/*POverlay.destroy();*/
-		/* A16 */
-		/* Destroy the new pipeline */
-		//PVColor.destroy();
+        PShow.destroy();
+		PCar.destroy();
 	}
 	
 	// Here it is the creation of the command buffer:
 	// You send to the GPU all the objects you want to draw,
 	// with their buffers and textures
-	
 	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
-		// sets global uniforms (see below for parameters explanation)
-		DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
 
-		// binds the pipeline
 		PMesh.bind(commandBuffer);
-		// For a pipeline object, this command binds the corresponding pipeline to the command buffer passed in its parameter
+		MEnv.bind(commandBuffer);
+		DSEnv.bind(commandBuffer, PMesh, 0, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
 
-		// binds the model
-		//MBody.bind(commandBuffer);
-		// For a Model object, this command binds the corresponding index and vertex buffer
-		// to the command buffer passed in its parameter
-		
-		// binds the data set
-		//DSBody.bind(commandBuffer, PMesh, 1, currentImage);
-		// For a Dataset object, this command binds the corresponding dataset
-		// to the command buffer and pipeline passed in its first and second parameters.
-		// The third parameter is the number of the set being bound
-		// As described in the Vulkan tutorial, a different dataset is required for each image in the swap chain.
-		// This is done automatically in file Starter.hpp, however the command here needs also the index
-		// of the current image in the swap chain, passed in its last parameter
-					
-		// record the drawing command in the command buffer
-		//vkCmdDrawIndexed(commandBuffer,
-		//		static_cast<uint32_t>(MBody.indices.size()), 1, 0, 0, 0);
-		// the second parameter is the number of indexes to be drawn. For a Model object,
-		// this can be retrieved with the .indices.size() method.
+        PShow.bind(commandBuffer);
+        MShow.bind(commandBuffer);
+        DSShow.bind(commandBuffer, PShow, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MShow.indices.size()), 1, 0, 0, 0);
 
-		/*MHandle.bind(commandBuffer);
-		DSHandle.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MHandle.indices.size()), 1, 0, 0, 0);*/
+		PCar.bind(commandBuffer);
+		switch(currCarModel) {
+			case 0:
+				MCar1.bind(commandBuffer);
+				DSCar1.bind(commandBuffer, PCar, 1, currentImage);
+				vkCmdDrawIndexed(commandBuffer,
+				                 static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
+				break;
+			case 1:
+				MCar2.bind(commandBuffer);
+				DSCar2.bind(commandBuffer, PCar, 1, currentImage);
+				vkCmdDrawIndexed(commandBuffer,
+				                 static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);
+				break;
+			case 2:
+				MCar3.bind(commandBuffer);
+				DSCar3.bind(commandBuffer, PCar, 1, currentImage);
+				vkCmdDrawIndexed(commandBuffer,
+				                 static_cast<uint32_t>(MCar3.indices.size()), 1, 0, 0, 0);
+				break;
+			case 3:
+				MCar4.bind(commandBuffer);
+				DSCar4.bind(commandBuffer, PCar, 1, currentImage);
+				vkCmdDrawIndexed(commandBuffer,
+				                 static_cast<uint32_t>(MCar4.indices.size()), 1, 0, 0, 0);
+				break;
+			case 4:
+				MCar5.bind(commandBuffer);
+				DSCar5.bind(commandBuffer, PCar, 1, currentImage);
+				vkCmdDrawIndexed(commandBuffer,
+				                 static_cast<uint32_t>(MCar5.indices.size()), 1, 0, 0, 0);
+				break;
+		}
 
-		/*MWheel.bind(commandBuffer);
-		DSWheel1.bind(commandBuffer, PMesh, 1, currentImage);
+		/*MCar1.bind(commandBuffer);
+		DSCar1.bind(commandBuffer, PCar, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
-		DSWheel2.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
-		DSWheel3.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MWheel.indices.size()), 1, 0, 0, 0);
-				*/
-		MCar1.bind(commandBuffer);
-		DSCar1.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
+			static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);*/
 
-		MCar2.bind(commandBuffer);
-		DSCar2.bind(commandBuffer, PMesh, 1, currentImage);
+		/*MCar2.bind(commandBuffer);
+		DSCar2.bind(commandBuffer, PCar, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);
+			static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);*/
 
-		MCar3.bind(commandBuffer);
-		DSCar3.bind(commandBuffer, PMesh, 1, currentImage);
+		/*MCar3.bind(commandBuffer);
+		DSCar3.bind(commandBuffer, PCar, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCar3.indices.size()), 1, 0, 0, 0);
+			static_cast<uint32_t>(MCar3.indices.size()), 1, 0, 0, 0);*/
 
-		MCar4.bind(commandBuffer);
-		DSCar4.bind(commandBuffer, PMesh, 1, currentImage);
+		/*MCar4.bind(commandBuffer);
+		DSCar4.bind(commandBuffer, PCar, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCar4.indices.size()), 1, 0, 0, 0);
-		
-		MCar5.bind(commandBuffer);
-		DSCar5.bind(commandBuffer, PMesh, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCar5.indices.size()), 1, 0, 0, 0);
-		/* A16 */
-		/* Insert the commands to draw the room */
-		/*PVColor.bind(commandBuffer);
-		MRoom.bind(commandBuffer);
-		DSRoom.bind(commandBuffer, PVColor, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MRoom.indices.size()), 1, 0, 0, 0);*/
+			static_cast<uint32_t>(MCar4.indices.size()), 1, 0, 0, 0);*/
 
-		/*POverlay.bind(commandBuffer);
-		MKey.bind(commandBuffer);
-		DSKey.bind(commandBuffer, POverlay, 0, currentImage);
+		/*MCar5.bind(commandBuffer);
+		DSCar5.bind(commandBuffer, PCar, 1, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MKey.indices.size()), 1, 0, 0, 0);*/
-
-		/*MSplash.bind(commandBuffer);
-		DSSplash.bind(commandBuffer, POverlay, 0, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MSplash.indices.size()), 1, 0, 0, 0);*/
+			static_cast<uint32_t>(MCar5.indices.size()), 1, 0, 0, 0);*/
 	}
+
+    void GameLogic() {
+        // Parameters
+        // Camera FOV-y, Near Plane and Far Plane
+        const float FOVy = glm::radians(60.0f);
+        const float nearPlane = 0.1f;
+        const float farPlane = 100.f;
+        // Camera target height and distance
+        const float camHeight = 1.5;
+        const float camDist = 1; /*1.5;*/
+        // Camera Pitch limits
+        const float minPitch = glm::radians(-60.0f);
+        const float maxPitch = glm::radians(60.0f);
+        const float minRoll = glm::radians(-30.0f);
+        const float maxRoll = glm::radians(30.0f);
+        // Rotation and motion speed
+        const float ROT_SPEED = glm::radians(120.0f);
+        // Car showcase radius
+        const float RADIUS = 3.5f;
+
+        // Integration with the timers and the controllers
+        float deltaT;
+        auto m = glm::vec3(0.0f), r = glm::vec3(0.0f);
+        bool fire = false;
+        getSixAxis(deltaT, m, r, fire);
+
+        // Game Logic implementation
+
+        // Showcase platform rotation
+        ShowRot += ShowRotSpeed * deltaT;
+
+        ViewPrj = glm::mat4(1);
+        glm::mat4 World = glm::mat4(1);
+
+        // World
+        // Position
+        glm::vec3 ux = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(1,0,0,1);
+        glm::vec3 uz = glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0)) * glm::vec4(0,0,-1,1);
+
+        // Collision checks with walls
+        Pos = Pos + MOVE_SPEED * m.x * ux * deltaT;
+        if (Pos.x < 1.0f) Pos.x = 1.0f;
+        else if (Pos.x > 11.0f) Pos.x = 11.0f;
+        //Pos = Pos + MOVE_SPEED * m.y * glm::vec3(0,1,0) * deltaT;
+        //Pos.y = Pos.y < 0.0f ? 0.0f : Pos.y;
+        Pos.y = 0.0f;
+        Pos = Pos + MOVE_SPEED * m.z * uz * deltaT;
+        if (Pos.z < 1.0f) Pos.z = 1.0f;
+        else if (Pos.z > 11.0f) Pos.z = 11.0f;
+
+        // Collision check with the car showcase
+        if (glm::distance(CarSpawnPos, Pos) < RADIUS) Pos = PrevPos;
+
+        //if (Pos != PrevPos) std::cout << "Pos = (" << Pos.x << ", " << Pos.y << ", " << Pos.z << ")" << std::endl;
+        PrevPos = Pos;
+
+        // Rotation
+        Yaw = Yaw - ROT_SPEED * deltaT * r.y;
+        /*if (Yaw != PrevYaw) std::cout << "Yaw = " << Yaw << std::endl;
+        PrevYaw = Yaw;*/
+
+        /*if (Pos.x < 1.0f) {
+            if ((Yaw < 0.0f && Yaw > -HalfM_PI) || Yaw > M_PI+HalfM_PI) Yaw = 0.0f;
+            else if (Yaw > M_PI || Yaw < -HalfM_PI) Yaw = M_PI;
+        }
+        if (Pos.x > 11.0f){
+            if ((Yaw > 0.0f && Yaw < HalfM_PI) || Yaw < -M_PI-HalfM_PI) Yaw = 0.0f;
+            else if (Yaw < -M_PI || Yaw > HalfM_PI) Yaw = -M_PI;
+        }
+        if (Pos.z < 1.0f) {
+            if ((Yaw < -HalfM_PI && Yaw > -M_PI) || Yaw > M_PI) Yaw = -HalfM_PI;
+            else if (Yaw > HalfM_PI || Yaw < -M_PI) Yaw = HalfM_PI;
+        }
+        if (Pos.z > 11.0f) {
+            if (Yaw < 0.0f && Yaw > -HalfM_PI) Yaw = -HalfM_PI;
+            else if (Yaw > 0.0f && Yaw < HalfM_PI) Yaw = HalfM_PI;
+        }*/
+
+        Pitch = Pitch + ROT_SPEED * deltaT * r.x;
+        Pitch  =  Pitch < minPitch ? minPitch :
+                  (Pitch > maxPitch ? maxPitch : Pitch);
+        Roll   = Roll - ROT_SPEED * deltaT * r.z;
+        Roll   = Roll < minRoll ? minRoll :
+                 (Roll > maxRoll ? maxRoll : Roll);
+
+        // Final world matrix computation
+        World = glm::translate(glm::mat4(1), Pos) * glm::rotate(glm::mat4(1.0f), Yaw, glm::vec3(0,1,0));
+
+        // Projection
+        glm::mat4 Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
+        Prj[1][1] *= -1;
+
+        // View
+        // Target
+        glm::vec3 target = Pos + glm::vec3(0.0f, camHeight, 0.0f);
+
+        // Camera position, depending on Yaw parameter, but not character direction
+        cameraPos = World * glm::vec4(0.0f, camHeight + camDist * sin(Pitch), camDist * cos(Pitch), 1.0);
+
+        // Damping of camera
+        glm::mat4 View = glm::rotate(glm::mat4(1.0f), -Roll, glm::vec3(0,0,1)) *
+                         glm::lookAt(cameraPos, target, glm::vec3(0,1,0));
+
+        ViewPrj = Prj * View;
+    }
 
 	// Here is where you update the uniforms.
 	// Very likely this will be where you will be writing the logic of your application.
@@ -632,232 +566,205 @@ class A16 : public BaseProject {
 		if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
-		
-		// Integration with the timers and the controllers
-		float deltaT;
-		auto m = glm::vec3(0.0f), r = glm::vec3(0.0f);
-		bool fire = false;
-		getSixAxis(deltaT, m, r, fire);
-		// getSixAxis() is defined in Starter.hpp in the base class.
-		// It fills the float point variable passed in its first parameter with the time
-		// since the last call to the procedure.
-		// It fills vec3 in the second parameters, with three values in the -1,1 range corresponding
-		// to motion (with left stick of the gamepad, or WASD + RF keys on the keyboard)
-		// It fills vec3 in the third parameters, with three values in the -1,1 range corresponding
-		// to motion (with right stick of the gamepad, or Arrow keys + QE keys on the keyboard, or mouse)
-		// If fills the last boolean variable with true if fire has been pressed:
-		//          SPACE on the keyboard, A or B button on the Gamepad, Right mouse button
 
-		// To debounce the pressing of the fire button, and start the event when the key is released
-		static bool wasFire = false;
-		bool handleFire = (wasFire && (!fire));
-		wasFire = fire;
-		
-		// Parameters: wheels and handle speed and range
-		const float HandleSpeed = glm::radians(90.0f);
-		const float HandleRange = glm::radians(45.0f);
-		const float WheelSpeed = glm::radians(180.0f);
-		const float SymExtent = glm::radians(15.0f);	// size of one symbol on the wheel in angle rad.
-		// static variables for current angles
-		static float HandleRot = 0.0;
-		static float Wheel1Rot = 0.0;
-		static float Wheel2Rot = 0.0;
-		static float Wheel3Rot = 0.0;
-		static float TargetRot = 0.0;	// Target rotation
+        static bool debounce = false;
+        static int curDebounce = 0;
+        // Switch currCarModel on specific key press
+        if(glfwGetKey(window, GLFW_KEY_N)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_N;
+				currCarModel = (currCarModel+1 == NumCars) ? 0 : currCarModel+1;
+                std::cout << "Scene : " << currCarModel << "\n";
+                RebuildPipeline();
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_N) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
+        if(glfwGetKey(window, GLFW_KEY_P)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_P;
+	            currCarModel = (currCarModel-1 < 0) ? NumCars-1 : currCarModel-1;
+                std::cout << "Scene : " << currCarModel << "\n";
+                RebuildPipeline();
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_P) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }
+        }
 
-		//std::cout << gameState << "\n";
-		/*switch(gameState) {		// main state machine implementation
-		  case 0: // initial state - show splash screen
-			if(handleFire) {
-				gameState = 1;	// jump to the wait key state
-			}
-			break;
-		  case 1: // wait key state
-			if(handleFire) {
-				gameState = 2;	// jump to the moving handle state
-			}
-			break;
-		  case 2: // handle moving down state
-			HandleRot += HandleSpeed * deltaT;
-			Wheel1Rot += WheelSpeed * deltaT;
-			Wheel2Rot += WheelSpeed * deltaT;
-			Wheel3Rot += WheelSpeed * deltaT;
-			if(HandleRot > HandleRange) {	// when limit is reached, jump the handle moving up state
-				gameState = 3;
-				HandleRot = HandleRange;
-			}
-			break;
-		  case 3: // handle moving up state
-			HandleRot -= HandleSpeed * deltaT;
-			Wheel1Rot += WheelSpeed * deltaT;
-			Wheel2Rot += WheelSpeed * deltaT;
-			Wheel3Rot += WheelSpeed * deltaT;
-			if(HandleRot < 0.0f) {	// when limit is reached, jump the 3 wheels spinning state
-				gameState = 4;
-				HandleRot = 0.0f;
-				TargetRot = Wheel1Rot + (10 + (float)(rand() % 11)) * SymExtent;
-			}
-			break;
-		  case 4: // 3 wheels spinning state
-			Wheel1Rot += WheelSpeed * deltaT;
-			Wheel2Rot += WheelSpeed * deltaT;
-			Wheel3Rot += WheelSpeed * deltaT;
-			//std::cout << Wheel1Rot << " --- " << TargetRot << "\n";
-			if(Wheel1Rot >= TargetRot) {	// When the target rotation is reached, jump to the next state
-				gameState = 5;
-				Wheel1Rot = round(TargetRot / SymExtent) * SymExtent; // quantize position
-				TargetRot = Wheel2Rot + (10 + (float)(rand() % 11)) * SymExtent;
-			}
-			break;
-		  case 5: // 2 wheels spinning state
-			Wheel2Rot += WheelSpeed * deltaT;
-			Wheel3Rot += WheelSpeed * deltaT;
-			if(Wheel2Rot >= TargetRot) {	// When the target rotation is reached, jump to the next state
-				gameState = 6;
-				Wheel2Rot = round(TargetRot / SymExtent) * SymExtent; // quantize position
-				TargetRot = Wheel3Rot + (10 + (float)(rand() % 11)) * SymExtent;
-			}
-			break;
-		  case 6: // 1 wheels spinning state
-			Wheel3Rot += WheelSpeed * deltaT;
-			if(Wheel3Rot >= TargetRot) {	// When the target rotation is reached, jump to the next state
-				gameState = 1;
-				Wheel3Rot = round(TargetRot / SymExtent) * SymExtent; // quantize position
-			}
-			break;
-		}*/
-		
-		// Parameters
-		// Camera FOV-y, Near Plane and Far Plane
-		const float FOVy = glm::radians(90.0f);
-		const float nearPlane = 0.1f;
-		const float farPlane = 100.0f;
-		const float rotSpeed = glm::radians(90.0f);
-		const float movSpeed = 1.0f;
+        //TODO: riscrivere lo shader rimuovendo la necessità per questo codice
+        static bool showNormal = false;
+        static bool showUV = false;
 
-		CamH += m.y * movSpeed * deltaT;
-		CamRadius -= m.z * movSpeed * deltaT;
-		CamPitch -= r.x * rotSpeed * deltaT;
-		CamYaw += m.x * rotSpeed * deltaT;
-		
-		glm::mat4 Prj = glm::perspective(FOVy, Ar, nearPlane, farPlane);
-		Prj[1][1] *= -1;
-		glm::vec3 camTarget = glm::vec3(0,CamH,0);
-		glm::vec3 camPos    = camTarget +
-							  CamRadius * glm::vec3(cos(CamPitch) * sin(CamYaw),
-													sin(CamPitch),
-													cos(CamPitch) * cos(CamYaw));
-		glm::mat4 View = glm::lookAt(camPos, camTarget, glm::vec3(0,1,0));
+        // Hold SHIFT to run
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) {
+            if(!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_LEFT_SHIFT;
+                MOVE_SPEED = 5.0f;
+            }
+        } else {
+            if((curDebounce == GLFW_KEY_LEFT_SHIFT) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+                MOVE_SPEED = 2.0f;
+            }
+        }
 
-		gubo.DlightDir = glm::normalize(glm::vec3(1, 2, 3));
-		gubo.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		gubo.AmbLightColor = glm::vec3(0.1f);
-		gubo.eyePos = camPos;
+        GameLogic();
 
-		// Writes value to the GPU
-		DSGubo.map(currentImage, &gubo, sizeof(gubo), 0);
-		// the .map() method of a DataSet object, requires the current image of the swap chain as first parameter
-		// the second parameter is the pointer to the C++ data structure to transfer to the GPU
-		// the third parameter is its size
-		// the fourth parameter is the location inside the descriptor set of this uniform block
+        //TODO: rimuovere secondo uniform buffer object
+        gubo.selector = glm::vec3(showNormal || showUV ? 0 : 1, showNormal ? 1 : 0, showUV ? 1 : 0);
+		gubo.lightDir = glm::normalize(glm::vec3(1, 2, 3));
+		gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		gubo.eyePos = cameraPos;
 
-		/*glm::mat4 World = glm::mat4(1);
-		uboBody.amb = 1.0f; uboBody.gamma = 180.0f; uboBody.sColor = glm::vec3(1.0f);
-		uboBody.mvpMat = Prj * View * World;
-		uboBody.mMat = World;
-		uboBody.nMat = glm::inverse(glm::transpose(World));
-		DSBody.map(currentImage, &uboBody, sizeof(uboBody), 0);
-	
-		World = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(0.3f,0.5f,-0.15f)),
-							HandleRot, glm::vec3(1,0,0));
-		uboHandle.amb = 1.0f; uboHandle.gamma = 180.0f; uboHandle.sColor = glm::vec3(1.0f);
-		uboHandle.mvpMat = Prj * View * World;
-		uboHandle.mMat = World;
-		uboHandle.nMat = glm::inverse(glm::transpose(World));
-		DSHandle.map(currentImage, &uboHandle, sizeof(uboHandle), 0);
-	
-		World = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(-0.15f,0.93f,-0.15f)),
-							Wheel1Rot, glm::vec3(1,0,0));
-		uboWheel1.amb = 1.0f; uboWheel1.gamma = 180.0f; uboWheel1.sColor = glm::vec3(1.0f);
-		uboWheel1.mvpMat = Prj * View * World;
-		uboWheel1.mMat = World;
-		uboWheel1.nMat = glm::inverse(glm::transpose(World));
-		DSWheel1.map(currentImage, &uboWheel1, sizeof(uboWheel1), 0);
-	
-		World = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(0.0f,0.93f,-0.15f)),
-							Wheel2Rot, glm::vec3(1,0,0));
-		uboWheel2.amb = 1.0f; uboWheel2.gamma = 180.0f; uboWheel2.sColor = glm::vec3(1.0f);
-		uboWheel2.mvpMat = Prj * View * World;
-		uboWheel2.mMat = World;
-		uboWheel2.nMat = glm::inverse(glm::transpose(World));
-		DSWheel2.map(currentImage, &uboWheel2, sizeof(uboWheel2), 0);
-	
-		World = glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(0.15f,0.93f,-0.15f)),
-							Wheel3Rot, glm::vec3(1,0,0));
-		uboWheel3.amb = 1.0f; uboWheel3.gamma = 180.0f; uboWheel3.sColor = glm::vec3(1.0f);
-		uboWheel3.mvpMat = Prj * View * World;
-		uboWheel3.mMat = World;
-		uboWheel3.nMat = glm::inverse(glm::transpose(World));
-		DSWheel3.map(currentImage, &uboWheel3, sizeof(uboWheel3), 0);
-		*/
-		glm::mat4 World = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(-2.0f, 0.0f, 0.0f)), glm::vec3(0.01, 0.01, 0.01));
+		gub.DlightDir = glm::normalize(glm::vec3(1, 2, 3));
+		gub.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		gub.AmbLightColor = glm::vec3(0.1f);
+		gub.eyePos = cameraPos;
+
+
+		/*glm::mat4 World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
+									  glm::vec3(6.0f, 0.1f, 6.0f)),
+								      glm::vec3(0.012, 0.012, 0.012)),ShowRot,
+		                              glm::vec3(0,1,0));;
 		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		uboCar.mvpMat = Prj * View * World;
+		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar1.map(currentImage, &uboCar, sizeof(uboCar), 0);
+		DSCar1.map((int)currentImage, &uboCar, sizeof(uboCar), 0);*/
 
-		World = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(0.2f, 0.0f, 0.0f)), glm::vec3(0.0105, 0.0105, 0.0105));
+		/*auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
+							    glm::vec3(6.0f, 0.1f, 6.0f)),
+								glm::vec3(0.0115, 0.0115, 0.0115)), ShowRot,
+	                            glm::vec3(0,1,0));
 		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		uboCar.mvpMat = Prj * View * World;
+		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar2.map(currentImage, &uboCar, sizeof(uboCar), 0);
+		DSCar2.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
 
-		World = glm::scale(glm::rotate(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(2.5f, 0.0f, 0.0f)), glm::radians(90.0f), glm::vec3(-1, 0, 0)), glm::radians(90.0f), glm::vec3(0, 0, 1)), glm::vec3(0.06, 0.06, 0.06));
+		/*auto World = glm::rotate(glm::scale(glm::rotate(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)), glm::radians(90.0f), glm::vec3(-1, 0, 0)), glm::radians(90.0f), glm::vec3(0, 0, 1)), glm::vec3(0.08, 0.08, 0.08)),
+				ShowRot, glm::vec3(0,0,1));
 		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		uboCar.mvpMat = Prj * View * World;
+		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar3.map(currentImage, &uboCar, sizeof(uboCar), 0);
+		DSCar3.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
 
-		World = glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(4.9f, 0.75f, 0.0f)), glm::radians(90.0f), glm::vec3(0, 1, 0)), glm::vec3(0.023, 0.023, 0.023));
+		/*auto World = glm::rotate(glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.2f, 6.0f)), glm::radians(90.0f), glm::vec3(0, 1, 0)), glm::vec3(0.035, 0.035, 0.035)),
+								 ShowRot, glm::vec3(0,1,0));
 		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		uboCar.mvpMat = Prj * View * World;
+		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar4.map(currentImage, &uboCar, sizeof(uboCar), 0);
+		DSCar4.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
 
-		World = glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(7.0f, 0.0f, 0.0f)), glm::vec3(0.8, 0.8, 0.8));
+		/*auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)), glm::vec3(1.3, 1.3, 1.3)),
+								 ShowRot, glm::vec3(0,1,0));
 		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		uboCar.mvpMat = Prj * View * World;
+		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar5.map(currentImage, &uboCar, sizeof(uboCar), 0);
+		DSCar5.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
 
-		/* A16 */
-		/* fill the uniform block for the room. Identical to the one of the body of the slot machine */
-		/*World = glm::mat4(1);
-		uboRoom.amb = 1.0f; uboRoom.gamma = 180.0f; uboRoom.sColor = glm::vec3(1.0f);
-		uboRoom.mvpMat = Prj * View * World;
-		uboRoom.mMat = World;
-		uboRoom.nMat = glm::inverse(glm::transpose(World));
-		DSRoom.map(currentImage, &uboRoom, sizeof(uboRoom), 0);*/
-		/* map the uniform data block to the GPU */
+		uboEnv.mMat = glm::scale(glm::mat4(1), glm::vec3(3));
+		uboEnv.mvpMat = ViewPrj * uboEnv.mMat;
+		uboEnv.nMat = glm::inverse(glm::transpose(uboEnv.mMat));
 
+        uboShow.mMat = glm::rotate(glm::translate(glm::mat4(1.0f),
+                                   glm::vec3(6.0f, 0.0f, 6.0f)),ShowRot,
+                                   glm::vec3(0,1,0));
+        uboShow.mvpMat = ViewPrj * uboShow.mMat;
+        uboShow.nMat = glm::inverse(glm::transpose(uboShow.mMat));
 
-		/*uboKey.visible = (gameState == 1) ? 1.0f : 0.0f;
-		DSKey.map(currentImage, &uboKey, sizeof(uboKey), 0);
+        // Mapping of the room
+		DSEnv.map((int)currentImage, &uboEnv, sizeof(uboEnv), 0);
+        DSEnv.map((int)currentImage, &gubo, sizeof(gubo), 1);
+        // Mapping of the Showcase platform
+        DSShow.map((int)currentImage, &uboShow, sizeof(uboShow), 0);
+        DSShow.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
-		uboSplash.visible = (gameState == 0) ? 1.0f : 0.0f;
-		DSSplash.map(currentImage, &uboSplash, sizeof(uboSplash), 0);*/
-	}	
+        switch(currCarModel) {
+            case 0:
+		        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+		        uboCar.mMat = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
+                                          glm::vec3(6.0f, 0.1f, 6.0f)),
+									      glm::vec3(0.012, 0.012, 0.012)),ShowRot,
+		                                  glm::vec3(0,1,0));
+		        uboCar.mvpMat = ViewPrj * uboCar.mMat;
+		        uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+	            DSCar1.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+		        break;
+            case 1:
+		        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+		        uboCar.mMat = glm::rotate(glm::scale(
+						glm::translate(glm::mat4(1.0f),glm::vec3(6.0f, 0.1f, 6.0f)),
+                         glm::vec3(0.0115, 0.0115, 0.0115)), ShowRot, glm::vec3(0,1,0));
+		        uboCar.mvpMat = ViewPrj * uboCar.mMat;
+		        uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+	            DSCar2.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+		        break;
+	        case 2:
+		        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+		        uboCar.mMat = glm::rotate(glm::scale(
+						glm::rotate(
+						glm::rotate(
+						glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)),
+					  glm::radians(90.0f), glm::vec3(-1, 0, 0)),
+					  glm::radians(90.0f), glm::vec3(0, 0, 1)),
+						 glm::vec3(0.08, 0.08, 0.08)),
+                      ShowRot, glm::vec3(0,0,1));
+		        uboCar.mvpMat = ViewPrj * uboCar.mMat;
+		        uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+		        DSCar3.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+		        break;
+	        case 3:
+		        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+		        uboCar.mMat = glm::rotate(
+						glm::scale(
+						glm::rotate(
+						glm::translate(
+						glm::mat4(1.0f),
+						 glm::vec3(6.0f, 1.2f, 6.0f)),
+					  glm::radians(90.0f),
+						 glm::vec3(0, 1, 0)),
+						 glm::vec3(0.035, 0.035, 0.035)),
+                      ShowRot, glm::vec3(0,1,0));
+		        uboCar.mvpMat = ViewPrj * uboCar.mMat;
+		        uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+		        DSCar4.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+		        break;
+	        case 4:
+		        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+		        uboCar.mMat = glm::rotate(glm::scale(
+						  glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)),
+					       glm::vec3(1.3, 1.3, 1.3)),
+                        ShowRot, glm::vec3(0,1,0));
+		        uboCar.mvpMat = ViewPrj * uboCar.mMat;
+		        uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+		        DSCar5.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+		        break;
+        }
+	}
+
+	static void createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
+    static void createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
 };
 
+#include "Meshes.hpp"
 
 // This is the main: probably you do not need to touch this!
 int main() {
-    A16 app;
+    Dealership app;
 
     try {
         app.run();
