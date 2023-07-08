@@ -20,8 +20,10 @@ struct MeshUniformBlock {
 	alignas(16) glm::mat4 nMat;
 };
 
-struct OverlayUniformBlock {
-	alignas(4) float visible;
+struct UniformBufferObject {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
 };
 
 struct GlobalUniformBlock {
@@ -31,13 +33,7 @@ struct GlobalUniformBlock {
 	alignas(16) glm::vec3 eyePos;
 };
 
-struct UniformBufferObject {
-    alignas(16) glm::mat4 mvpMat;
-    alignas(16) glm::mat4 mMat;
-    alignas(16) glm::mat4 nMat;
-};
-
-//TODO: riscrivere lo shader rimuovendo la necessità per il selector
+//TODO: rewrite room shader removing selector from struct
 struct GlobalUniformBufferObject {
     alignas(16) glm::vec3 selector;
     alignas(16) glm::vec3 lightDir;
@@ -59,29 +55,29 @@ class Dealership : public BaseProject {
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLMesh, DSLShow, DSLGubo, DSLEnv;
+	DescriptorSetLayout DSLMesh, DSLGubo, DSLEnv;
 
 	// Vertex formats
 	VertexDescriptor VMesh, VShow;
 
 	// Pipelines [Shader couples]
-	Pipeline PMesh, PShow, PCar;
+	Pipeline PMesh, PCar;
 
-	DescriptorSet DSEnv, DSShow, DSGubo;
+	DescriptorSet DSEnv, DSShow, DSGubo, DSDoor;
 	DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
-	Model<VertexMesh> MEnv, MShow, MCar1, MCar2, MCar3, MCar4, MCar5;
+	Model<VertexMesh> MEnv, MShow, MCar1, MCar2, MCar3, MCar4, MCar5, MDoor;
     //TODO: define car models array
 
 	// C++ storage for uniform variables
 	MeshUniformBlock uboCar;
-	UniformBufferObject uboEnv, uboShow;
+	UniformBufferObject uboEnv, uboShow, uboDoor;
 
 	GlobalUniformBlock gub;
     GlobalUniformBufferObject gubo;
 
-	Texture TEnv, TShow;
+	Texture TEnv, TShow, TDoor;
 	Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
 	Texture TCar2_0, TCar2_1, TCar2_2, TCar2_3;
 	Texture TCar3_0, TCar3_1, TCar3_2, TCar3_3;
@@ -133,8 +129,8 @@ class Dealership : public BaseProject {
 	// Here you load and setup all your Vulkan Models and Textures.
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() override {
+
 		// Descriptor Layouts [what will be passed to the shaders]
-		//TODO: Test
 		DSLMesh.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
@@ -148,12 +144,6 @@ class Dealership : public BaseProject {
 					{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 				});
-
-        DSLShow.init(this, {
-                {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
-                {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-                {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-        });
 
 		// Vertex descriptors
 		VMesh.init(this, {
@@ -188,8 +178,8 @@ class Dealership : public BaseProject {
 		PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLEnv});
 		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
-        PShow.init(this, &VShow, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLShow});
-        PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
+        /*PShow.init(this, &VShow, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLEnv});
+        PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);*/
 
 		/* Models */
 		createEnvMesh(MEnv.vertices, MEnv.indices);
@@ -203,6 +193,8 @@ class Dealership : public BaseProject {
 		MCar3.init(this, &VMesh, "Models/Car3.obj", OBJ);
 		MCar4.init(this, &VMesh, "Models/Car4.obj", OBJ);
 		MCar5.init(this, &VMesh, "Models/Car5.obj", OBJ);
+
+        MDoor.init(this, &VMesh, "models/door/door.gltf", GLTF);
 
 		/* Textures */
 		TCar1_0.init(this, "textures/Car1/cb_car_baseColor.png");
@@ -231,13 +223,14 @@ class Dealership : public BaseProject {
 		TCar5_3.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
 		TEnv.init(this, "textures/TextureRoom.jpg");
+
+        TDoor.init(this, "textures/door/Door_baseColor.jpeg");
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsInit() override {
 		// This creates a new pipeline (with the current surface), using its shaders
 		PMesh.create();
-		PShow.create();
 		PCar.create();
 
 		// Here you define the data set
@@ -247,11 +240,17 @@ class Dealership : public BaseProject {
 				{2, TEXTURE, 0, &TEnv}
 		});
 
-		DSShow.init(this, &DSLShow, {
+		DSShow.init(this, &DSLEnv, {
 				{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
 				{1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
 				{2, TEXTURE, 0, &TEnv}
 		});
+
+        DSDoor.init(this, &DSLEnv, {
+                {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+                {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
+                {2, TEXTURE, 0, &TDoor}
+        });
 
 		DSCar1.init(this, &DSLMesh, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -308,7 +307,6 @@ class Dealership : public BaseProject {
 	void pipelinesAndDescriptorSetsCleanup() override {
 		// Cleanup pipelines
 		PMesh.cleanup();
-        PShow.cleanup();
 		PCar.cleanup();
 
 		DSCar1.cleanup();
@@ -317,7 +315,7 @@ class Dealership : public BaseProject {
 		DSCar4.cleanup();
 		DSCar5.cleanup();
 		DSGubo.cleanup();
-
+        DSDoor.cleanup();
 		DSEnv.cleanup();
         DSShow.cleanup();
 	}
@@ -356,6 +354,8 @@ class Dealership : public BaseProject {
 		TEnv.cleanup();
         TShow.cleanup();
 
+        TDoor.cleanup();
+
 		// Cleanup models
 		MCar1.cleanup();
 		MCar2.cleanup();
@@ -364,16 +364,15 @@ class Dealership : public BaseProject {
 		MCar5.cleanup();
 		MEnv.cleanup();
         MShow.cleanup();
+        MDoor.cleanup();
 
 		// Cleanup descriptor set layouts
 		DSLMesh.cleanup();
-        DSLShow.cleanup();
 		DSLGubo.cleanup();
 		DSLEnv.cleanup();
 		
 		// Destroys the pipelines
 		PMesh.destroy();
-        PShow.destroy();
 		PCar.destroy();
 	}
 	
@@ -388,13 +387,18 @@ class Dealership : public BaseProject {
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
 
-        PShow.bind(commandBuffer);
         MShow.bind(commandBuffer);
-        DSShow.bind(commandBuffer, PShow, 0, currentImage);
+        DSShow.bind(commandBuffer, PMesh, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MShow.indices.size()), 1, 0, 0, 0);
 
+        MDoor.bind(commandBuffer);
+        DSDoor.bind(commandBuffer, PMesh, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
+
 		PCar.bind(commandBuffer);
+        DSGubo.bind(commandBuffer, PCar, 0, currentImage);
 		switch(currCarModel) {
 			case 0:
 				MCar1.bind(commandBuffer);
@@ -498,7 +502,7 @@ class Dealership : public BaseProject {
         else if (Pos.x > 11.0f) Pos.x = 11.0f;
         //Pos = Pos + MOVE_SPEED * m.y * glm::vec3(0,1,0) * deltaT;
         //Pos.y = Pos.y < 0.0f ? 0.0f : Pos.y;
-        Pos.y = 0.0f;
+        Pos.y = 0.5f;
         Pos = Pos + MOVE_SPEED * m.z * uz * deltaT;
         if (Pos.z < 1.0f) Pos.z = 1.0f;
         else if (Pos.z > 11.0f) Pos.z = 11.0f;
@@ -534,7 +538,7 @@ class Dealership : public BaseProject {
         Pitch = Pitch + ROT_SPEED * deltaT * r.x;
         Pitch  =  Pitch < minPitch ? minPitch :
                   (Pitch > maxPitch ? maxPitch : Pitch);
-        Roll   = Roll - ROT_SPEED * deltaT * r.z;
+        Roll   = Roll - ROT_SPEED * deltaT * -r.z;
         Roll   = Roll < minRoll ? minRoll :
                  (Roll > maxRoll ? maxRoll : Roll);
 
@@ -599,7 +603,7 @@ class Dealership : public BaseProject {
             }
         }
 
-        //TODO: riscrivere lo shader rimuovendo la necessità per questo codice
+        //TODO: unnecessary when selector is removed from shader
         static bool showNormal = false;
         static bool showUV = false;
 
@@ -620,7 +624,7 @@ class Dealership : public BaseProject {
 
         GameLogic();
 
-        //TODO: rimuovere secondo uniform buffer object
+        //TODO: remove global uniform buffer object
         gubo.selector = glm::vec3(showNormal || showUV ? 0 : 1, showNormal ? 1 : 0, showUV ? 1 : 0);
 		gubo.lightDir = glm::normalize(glm::vec3(1, 2, 3));
 		gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -631,8 +635,8 @@ class Dealership : public BaseProject {
 		gub.AmbLightColor = glm::vec3(0.1f);
 		gub.eyePos = cameraPos;
 
-
-		/*glm::mat4 World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
+        /*
+		glm::mat4 World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
 									  glm::vec3(6.0f, 0.1f, 6.0f)),
 								      glm::vec3(0.012, 0.012, 0.012)),ShowRot,
 		                              glm::vec3(0,1,0));;
@@ -640,9 +644,9 @@ class Dealership : public BaseProject {
 		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar1.map((int)currentImage, &uboCar, sizeof(uboCar), 0);*/
+		DSCar1.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
 
-		/*auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
+		auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
 							    glm::vec3(6.0f, 0.1f, 6.0f)),
 								glm::vec3(0.0115, 0.0115, 0.0115)), ShowRot,
 	                            glm::vec3(0,1,0));
@@ -650,31 +654,32 @@ class Dealership : public BaseProject {
 		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar2.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
+		DSCar2.map(currentImage, &uboCar, sizeof(uboCar), 0);
 
-		/*auto World = glm::rotate(glm::scale(glm::rotate(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)), glm::radians(90.0f), glm::vec3(-1, 0, 0)), glm::radians(90.0f), glm::vec3(0, 0, 1)), glm::vec3(0.08, 0.08, 0.08)),
+		auto World = glm::rotate(glm::scale(glm::rotate(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)), glm::radians(90.0f), glm::vec3(-1, 0, 0)), glm::radians(90.0f), glm::vec3(0, 0, 1)), glm::vec3(0.08, 0.08, 0.08)),
 				ShowRot, glm::vec3(0,0,1));
 		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
 		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar3.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
+		DSCar3.map(currentImage, &uboCar, sizeof(uboCar), 0);
 
-		/*auto World = glm::rotate(glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.2f, 6.0f)), glm::radians(90.0f), glm::vec3(0, 1, 0)), glm::vec3(0.035, 0.035, 0.035)),
+		auto World = glm::rotate(glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.2f, 6.0f)), glm::radians(90.0f), glm::vec3(0, 1, 0)), glm::vec3(0.035, 0.035, 0.035)),
 								 ShowRot, glm::vec3(0,1,0));
 		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
 		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar4.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
+		DSCar4.map(currentImage, &uboCar, sizeof(uboCar), 0);
 
-		/*auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)), glm::vec3(1.3, 1.3, 1.3)),
+		auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)), glm::vec3(1.3, 1.3, 1.3)),
 								 ShowRot, glm::vec3(0,1,0));
 		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
 		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar5.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
+		DSCar5.map(currentImage, &uboCar, sizeof(uboCar), 0);
+        */
 
 		uboEnv.mMat = glm::scale(glm::mat4(1), glm::vec3(3));
 		uboEnv.mvpMat = ViewPrj * uboEnv.mMat;
@@ -686,12 +691,22 @@ class Dealership : public BaseProject {
         uboShow.mvpMat = ViewPrj * uboShow.mMat;
         uboShow.nMat = glm::inverse(glm::transpose(uboShow.mMat));
 
-        // Mapping of the room
+        uboDoor.mMat = glm::rotate(glm::rotate(glm::scale(
+                glm::translate(glm::mat4(1.0f),glm::vec3(6.0f, 1.65f, 12.0f)),
+                 glm::vec3(1.5)), glm::radians(-90.0f), glm::vec3(1,0,0)),
+                glm::radians(-90.0f), glm::vec3(0,0,1));
+        uboDoor.mvpMat = ViewPrj * uboDoor.mMat;
+        uboDoor.nMat = glm::inverse(glm::transpose(uboDoor.mMat));
+
+        // Mapping of the Room
 		DSEnv.map((int)currentImage, &uboEnv, sizeof(uboEnv), 0);
         DSEnv.map((int)currentImage, &gubo, sizeof(gubo), 1);
         // Mapping of the Showcase platform
         DSShow.map((int)currentImage, &uboShow, sizeof(uboShow), 0);
         DSShow.map((int)currentImage, &gubo, sizeof(gubo), 1);
+        // Mapping of the Door
+        DSDoor.map((int)currentImage, &uboDoor, sizeof(uboDoor), 0);
+        DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
         switch(currCarModel) {
             case 0:
