@@ -20,12 +20,6 @@ struct MeshUniformBlock {
 	alignas(16) glm::mat4 nMat;
 };
 
-struct UniformBufferObject {
-    alignas(16) glm::mat4 mvpMat;
-    alignas(16) glm::mat4 mMat;
-    alignas(16) glm::mat4 nMat;
-};
-
 struct GlobalUniformBlock {
 	alignas(16) glm::vec3 DlightDir;
 	alignas(16) glm::vec3 DlightColor;
@@ -33,7 +27,13 @@ struct GlobalUniformBlock {
 	alignas(16) glm::vec3 eyePos;
 };
 
-//TODO: rewrite room shader removing selector from struct
+struct UniformBufferObject {
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
+};
+
+//TODO: riscrivere lo shader rimuovendo la necessità per il selector
 struct GlobalUniformBufferObject {
     alignas(16) glm::vec3 selector;
     alignas(16) glm::vec3 lightDir;
@@ -56,12 +56,13 @@ class Dealership : public BaseProject {
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
 	DescriptorSetLayout DSLMesh, DSLGubo, DSLEnv;
+	DescriptorSetLayout DSLCar1, DSLCar2, DSLCar;
 
 	// Vertex formats
 	VertexDescriptor VMesh, VShow;
 
 	// Pipelines [Shader couples]
-	Pipeline PMesh, PCar;
+	Pipeline PMesh, PCar1, PCar2, PCar;
 
 	DescriptorSet DSEnv, DSShow, DSGubo, DSDoor;
 	DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
@@ -129,9 +130,24 @@ class Dealership : public BaseProject {
 	// Here you load and setup all your Vulkan Models and Textures.
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() override {
-
 		// Descriptor Layouts [what will be passed to the shaders]
-		DSLMesh.init(this, {
+		//TODO: Test
+		DSLCar1.init(this, {
+					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+				});
+
+		DSLCar2.init(this, {
+					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+				});
+		DSLCar.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
@@ -144,6 +160,8 @@ class Dealership : public BaseProject {
 					{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 				});
+
+        
 
 		// Vertex descriptors
 		VMesh.init(this, {
@@ -173,12 +191,14 @@ class Dealership : public BaseProject {
 			   });
 
 		// Pipelines [Shader couples]
-		PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLMesh});
+		PCar1.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1ShaderFrag.spv", {&DSLGubo, &DSLCar1});
+		PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLCar2});
+		PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLCar});
 														//shaders/BlinnNormMapFrag.spv -- MeshFrag.spv
 		PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLEnv});
 		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
-        /*PShow.init(this, &VShow, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLEnv});
+        /*PShow.init(this, &VShow, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLShow});
         PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);*/
 
 		/* Models */
@@ -194,8 +214,7 @@ class Dealership : public BaseProject {
 		MCar4.init(this, &VMesh, "Models/Car4.obj", OBJ);
 		MCar5.init(this, &VMesh, "Models/Car5.obj", OBJ);
 
-        MDoor.init(this, &VMesh, "models/door/door.gltf", GLTF);
-
+		MDoor.init(this, &VMesh, "models/door/door.gltf", GLTF);
 		/* Textures */
 		TCar1_0.init(this, "textures/Car1/cb_car_baseColor.png");
 		TCar1_1.init(this, "textures/Car1/cb_car_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
@@ -224,13 +243,15 @@ class Dealership : public BaseProject {
 
 		TEnv.init(this, "textures/TextureRoom.jpg");
 
-        TDoor.init(this, "textures/door/Door_baseColor.jpeg");
+		TDoor.init(this, "textures/door/Door_baseColor.jpeg");
 	}
 	
 	// Here you create your pipelines and Descriptor Sets!
 	void pipelinesAndDescriptorSetsInit() override {
 		// This creates a new pipeline (with the current surface), using its shaders
 		PMesh.create();
+		PCar1.create();
+		PCar2.create();
 		PCar.create();
 
 		// Here you define the data set
@@ -246,13 +267,13 @@ class Dealership : public BaseProject {
 				{2, TEXTURE, 0, &TEnv}
 		});
 
-        DSDoor.init(this, &DSLEnv, {
-                {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-                {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-                {2, TEXTURE, 0, &TDoor}
-        });
+		DSDoor.init(this, &DSLEnv, {
+			   {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+			   {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
+			   {2, TEXTURE, 0, &TDoor}
+			});
 
-		DSCar1.init(this, &DSLMesh, {
+		DSCar1.init(this, &DSLCar1, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar1_0},
 					{2, TEXTURE, 0, &TCar1_1},
@@ -261,7 +282,7 @@ class Dealership : public BaseProject {
 
 		});
 
-		DSCar2.init(this, &DSLMesh, {
+		DSCar2.init(this, &DSLCar2, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar2_0},
 					{2, TEXTURE, 0, &TCar2_0},
@@ -270,7 +291,7 @@ class Dealership : public BaseProject {
 
 			});
 
-		DSCar3.init(this, &DSLMesh, {
+		DSCar3.init(this, &DSLCar, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar3_0},
 					{2, TEXTURE, 0, &TCar3_0},
@@ -279,7 +300,7 @@ class Dealership : public BaseProject {
 
 			});
 
-		DSCar4.init(this, &DSLMesh, {
+		DSCar4.init(this, &DSLCar, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar4_0},
 					{2, TEXTURE, 0, &TCar4_0},
@@ -288,7 +309,7 @@ class Dealership : public BaseProject {
 
 			});
 		
-		DSCar5.init(this, &DSLMesh, {
+		DSCar5.init(this, &DSLCar, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar5_0},
 					{2, TEXTURE, 0, &TCar5_0},
@@ -307,6 +328,8 @@ class Dealership : public BaseProject {
 	void pipelinesAndDescriptorSetsCleanup() override {
 		// Cleanup pipelines
 		PMesh.cleanup();
+		PCar1.cleanup();
+		PCar2.cleanup();
 		PCar.cleanup();
 
 		DSCar1.cleanup();
@@ -315,7 +338,7 @@ class Dealership : public BaseProject {
 		DSCar4.cleanup();
 		DSCar5.cleanup();
 		DSGubo.cleanup();
-        DSDoor.cleanup();
+		DSDoor.cleanup(); 
 		DSEnv.cleanup();
         DSShow.cleanup();
 	}
@@ -354,7 +377,7 @@ class Dealership : public BaseProject {
 		TEnv.cleanup();
         TShow.cleanup();
 
-        TDoor.cleanup();
+		TDoor.cleanup();
 
 		// Cleanup models
 		MCar1.cleanup();
@@ -364,15 +387,19 @@ class Dealership : public BaseProject {
 		MCar5.cleanup();
 		MEnv.cleanup();
         MShow.cleanup();
-        MDoor.cleanup();
+		MDoor.cleanup();
 
 		// Cleanup descriptor set layouts
-		DSLMesh.cleanup();
+		DSLCar1.cleanup();
+		DSLCar2.cleanup();
+		DSLCar.cleanup();
 		DSLGubo.cleanup();
 		DSLEnv.cleanup();
 		
 		// Destroys the pipelines
 		PMesh.destroy();
+		PCar1.destroy();
+		PCar2.destroy();
 		PCar.destroy();
 	}
 	
@@ -392,23 +419,24 @@ class Dealership : public BaseProject {
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MShow.indices.size()), 1, 0, 0, 0);
 
-        MDoor.bind(commandBuffer);
-        DSDoor.bind(commandBuffer, PMesh, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
+		MDoor.bind(commandBuffer);
+		DSDoor.bind(commandBuffer, PMesh, 0, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+			static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
 
+		PCar1.bind(commandBuffer);
+		PCar2.bind(commandBuffer);
 		PCar.bind(commandBuffer);
-        DSGubo.bind(commandBuffer, PCar, 0, currentImage);
 		switch(currCarModel) {
 			case 0:
 				MCar1.bind(commandBuffer);
-				DSCar1.bind(commandBuffer, PCar, 1, currentImage);
+				DSCar1.bind(commandBuffer, PCar1, 1, currentImage);
 				vkCmdDrawIndexed(commandBuffer,
 				                 static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
 				break;
 			case 1:
 				MCar2.bind(commandBuffer);
-				DSCar2.bind(commandBuffer, PCar, 1, currentImage);
+				DSCar2.bind(commandBuffer, PCar2, 1, currentImage);
 				vkCmdDrawIndexed(commandBuffer,
 				                 static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);
 				break;
@@ -634,8 +662,8 @@ class Dealership : public BaseProject {
 		gub.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gub.AmbLightColor = glm::vec3(0.1f);
 		gub.eyePos = cameraPos;
-
-        /*
+	
+		/*
 		glm::mat4 World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
 									  glm::vec3(6.0f, 0.1f, 6.0f)),
 								      glm::vec3(0.012, 0.012, 0.012)),ShowRot,
@@ -678,8 +706,7 @@ class Dealership : public BaseProject {
 		uboCar.mvpMat = ViewPrj * World;
 		uboCar.mMat = World;
 		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar5.map(currentImage, &uboCar, sizeof(uboCar), 0);
-        */
+		DSCar5.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
 
 		uboEnv.mMat = glm::scale(glm::mat4(1), glm::vec3(3));
 		uboEnv.mvpMat = ViewPrj * uboEnv.mMat;
@@ -691,22 +718,23 @@ class Dealership : public BaseProject {
         uboShow.mvpMat = ViewPrj * uboShow.mMat;
         uboShow.nMat = glm::inverse(glm::transpose(uboShow.mMat));
 
-        uboDoor.mMat = glm::rotate(glm::rotate(glm::scale(
-                glm::translate(glm::mat4(1.0f),glm::vec3(6.0f, 1.65f, 12.0f)),
-                 glm::vec3(1.5)), glm::radians(-90.0f), glm::vec3(1,0,0)),
-                glm::radians(-90.0f), glm::vec3(0,0,1));
-        uboDoor.mvpMat = ViewPrj * uboDoor.mMat;
-        uboDoor.nMat = glm::inverse(glm::transpose(uboDoor.mMat));
+		uboDoor.mMat = glm::rotate(glm::rotate(glm::scale(
+			glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.65f, 12.0f)),
+			glm::vec3(1.5)), glm::radians(-90.0f), glm::vec3(1, 0, 0)),
+			glm::radians(-90.0f), glm::vec3(0, 0, 1));
+		uboDoor.mvpMat = ViewPrj * uboDoor.mMat;
+		uboDoor.nMat = glm::inverse(glm::transpose(uboDoor.mMat));
 
-        // Mapping of the Room
+        // Mapping of the room
 		DSEnv.map((int)currentImage, &uboEnv, sizeof(uboEnv), 0);
         DSEnv.map((int)currentImage, &gubo, sizeof(gubo), 1);
         // Mapping of the Showcase platform
         DSShow.map((int)currentImage, &uboShow, sizeof(uboShow), 0);
         DSShow.map((int)currentImage, &gubo, sizeof(gubo), 1);
-        // Mapping of the Door
-        DSDoor.map((int)currentImage, &uboDoor, sizeof(uboDoor), 0);
-        DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
+
+		// Mapping of the Door
+		DSDoor.map((int)currentImage, &uboDoor, sizeof(uboDoor), 0);
+		DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
         switch(currCarModel) {
             case 0:
