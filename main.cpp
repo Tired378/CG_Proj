@@ -55,8 +55,8 @@ class Dealership : public BaseProject {
 	float Ar;
 
 	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLMesh, DSLGubo, DSLEnv;
-	DescriptorSetLayout DSLCar1, DSLCar2, DSLCar;
+	DescriptorSetLayout DSLCar, DSLGubo, DSLEnv;
+	DescriptorSetLayout DSLCar1, DSLCar2;// , DSLCar;
 
 	// Vertex formats
 	VertexDescriptor VMesh, VShow;
@@ -132,6 +132,11 @@ class Dealership : public BaseProject {
 	void localInit() override {
 		// Descriptor Layouts [what will be passed to the shaders]
 		//TODO: Test
+		DSLCar.init(this, {
+					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+			});
+
 		DSLCar1.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
@@ -144,22 +149,24 @@ class Dealership : public BaseProject {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-				});
+				});/*
 		DSLCar.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-				});
+				});*/
 
 		DSLEnv.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
 					{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
 				});
+
+		DSLGubo.init(this, {
+					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
+			});
 
         
 
@@ -186,15 +193,15 @@ class Dealership : public BaseProject {
                            sizeof(glm::vec2), UV}
                });
 
-		DSLGubo.init(this,{
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
-			   });
+		
 
 		// Pipelines [Shader couples]
 		PCar1.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1ShaderFrag.spv", {&DSLGubo, &DSLCar1});
-		PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLCar2});
-		PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLCar});
-														//shaders/BlinnNormMapFrag.spv -- MeshFrag.spv
+		PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
+		PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/CarShaderFrag.spv", {&DSLGubo, &DSLCar});
+														//shaders/BlinnNormMapFrag.spv -- MeshFrag.spv*/
+		//PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", { &DSLGubo, &DSLCar });
+
 		PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLEnv});
 		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
@@ -222,8 +229,8 @@ class Dealership : public BaseProject {
 		TCar1_3.init(this, "textures/Car1/cb_car_emissive.png", VK_FORMAT_R8G8B8A8_UNORM);
 
 		TCar2_0.init(this, "textures/Car2/baseColor.png");
-		/*TCar2_1.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar2_2.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+		TCar2_1.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+		/*TCar2_2.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
 		TCar2_3.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
 		TCar3_0.init(this, "textures/Car3/baseColor.png");
@@ -273,6 +280,7 @@ class Dealership : public BaseProject {
 			   {2, TEXTURE, 0, &TDoor}
 			});
 
+		//DSCar1.init(this, &DSLCar, {
 		DSCar1.init(this, &DSLCar1, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar1_0},
@@ -282,44 +290,37 @@ class Dealership : public BaseProject {
 
 		});
 
+		//DSCar2.init(this, &DSLCar, {
 		DSCar2.init(this, &DSLCar2, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 					{1, TEXTURE, 0, &TCar2_0},
-					{2, TEXTURE, 0, &TCar2_0},
-					{3, TEXTURE, 0, &TCar2_0},
-					{4, TEXTURE, 0, &TCar2_0}
+					{2, TEXTURE, 0, &TCar2_1},
 
 			});
 
+		//DSCar3.init(this, &DSLCar, {
 		DSCar3.init(this, &DSLCar, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TCar3_0},
-					{2, TEXTURE, 0, &TCar3_0},
-					{3, TEXTURE, 0, &TCar3_0},
-					{4, TEXTURE, 0, &TCar3_0}
+					{1, TEXTURE, 0, &TCar3_0}
 
 			});
 
+		//DSCar4.init(this, &DSLCar, {
 		DSCar4.init(this, &DSLCar, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TCar4_0},
-					{2, TEXTURE, 0, &TCar4_0},
-					{3, TEXTURE, 0, &TCar4_0},
-					{4, TEXTURE, 0, &TCar4_0}
+					{1, TEXTURE, 0, &TCar4_0}
 
 			});
 		
+		//DSCar5.init(this, &DSLCar, {
 		DSCar5.init(this, &DSLCar, {
 					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TCar5_0},
-					{2, TEXTURE, 0, &TCar5_0},
-					{3, TEXTURE, 0, &TCar5_0},
-					{4, TEXTURE, 0, &TCar5_0}
+					{1, TEXTURE, 0, &TCar5_0}
 
 			});
 
 		DSGubo.init(this, &DSLGubo, {
-					{0, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr}
+					{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
 			});
 	}
 
@@ -356,26 +357,15 @@ class Dealership : public BaseProject {
 
 		TCar2_0.cleanup();
 		TCar2_1.cleanup();
-		TCar2_2.cleanup();
-		TCar2_3.cleanup();
 
 		TCar3_0.cleanup();
-		TCar3_1.cleanup();
-		TCar3_2.cleanup();
-		TCar3_3.cleanup();
 
 		TCar4_0.cleanup();
-		TCar4_1.cleanup();
-		TCar4_2.cleanup();
-		TCar4_3.cleanup();
 
 		TCar5_0.cleanup();
-		TCar5_1.cleanup();
-		TCar5_2.cleanup();
-		TCar5_3.cleanup();
 
 		TEnv.cleanup();
-        TShow.cleanup();
+        //TShow.cleanup();
 
 		TDoor.cleanup();
 
@@ -392,6 +382,7 @@ class Dealership : public BaseProject {
 		// Cleanup descriptor set layouts
 		DSLCar1.cleanup();
 		DSLCar2.cleanup();
+		//DSLCar.cleanup();
 		DSLCar.cleanup();
 		DSLGubo.cleanup();
 		DSLEnv.cleanup();
@@ -423,36 +414,44 @@ class Dealership : public BaseProject {
 		DSDoor.bind(commandBuffer, PMesh, 0, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
-
-		PCar1.bind(commandBuffer);
-		PCar2.bind(commandBuffer);
-		PCar.bind(commandBuffer);
+					
+		
 		switch(currCarModel) {
 			case 0:
+				PCar1.bind(commandBuffer);
+				DSGubo.bind(commandBuffer, PCar1, 0, currentImage);
 				MCar1.bind(commandBuffer);
 				DSCar1.bind(commandBuffer, PCar1, 1, currentImage);
 				vkCmdDrawIndexed(commandBuffer,
 				                 static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
 				break;
 			case 1:
+				PCar2.bind(commandBuffer);
+				DSGubo.bind(commandBuffer, PCar2, 0, currentImage);
 				MCar2.bind(commandBuffer);
 				DSCar2.bind(commandBuffer, PCar2, 1, currentImage);
 				vkCmdDrawIndexed(commandBuffer,
 				                 static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);
 				break;
 			case 2:
+				PCar.bind(commandBuffer);
+				DSGubo.bind(commandBuffer, PCar, 0, currentImage);
 				MCar3.bind(commandBuffer);
 				DSCar3.bind(commandBuffer, PCar, 1, currentImage);
 				vkCmdDrawIndexed(commandBuffer,
 				                 static_cast<uint32_t>(MCar3.indices.size()), 1, 0, 0, 0);
 				break;
 			case 3:
+				PCar.bind(commandBuffer);
+				DSGubo.bind(commandBuffer, PCar, 0, currentImage);
 				MCar4.bind(commandBuffer);
 				DSCar4.bind(commandBuffer, PCar, 1, currentImage);
 				vkCmdDrawIndexed(commandBuffer,
 				                 static_cast<uint32_t>(MCar4.indices.size()), 1, 0, 0, 0);
 				break;
 			case 4:
+				PCar.bind(commandBuffer);
+				DSGubo.bind(commandBuffer, PCar, 0, currentImage);
 				MCar5.bind(commandBuffer);
 				DSCar5.bind(commandBuffer, PCar, 1, currentImage);
 				vkCmdDrawIndexed(commandBuffer,
@@ -735,6 +734,8 @@ class Dealership : public BaseProject {
 		// Mapping of the Door
 		DSDoor.map((int)currentImage, &uboDoor, sizeof(uboDoor), 0);
 		DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
+
+		DSGubo.map(currentImage, &gub, sizeof(gub), 0);
 
         switch(currCarModel) {
             case 0:
