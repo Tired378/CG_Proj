@@ -229,7 +229,7 @@ class Dealership : public BaseProject {
 		TCar1_3.init(this, "textures/Car1/cb_car_emissive.png", VK_FORMAT_R8G8B8A8_UNORM);
 
 		TCar2_0.init(this, "textures/Car2/baseColor.png");
-		TCar2_1.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+		TCar2_1.init(this, "textures/Car2/roughness.png", VK_FORMAT_R8G8B8A8_UNORM);
 		/*TCar2_2.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
 		TCar2_3.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
