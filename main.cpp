@@ -623,8 +623,23 @@ class Dealership : public BaseProject {
 			glfwSetWindowShouldClose(window, GL_TRUE);
 		}
 
+		// Lighting parameters
+		const auto lightStep = 0.2f;
+		const auto colorStep = 10.0f;
+		static auto colorX = 1.0f;
+		static auto colorY = 1.0f;
+		static auto colorZ = 1.0f;
+		static float* currentColorPtr = &colorX;
+		static auto lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
+		static auto lightPosOld = lightPos;
+		static auto colorOld = glm::vec3(colorX, colorY, colorZ);
+
+		// Key press parameters
         static bool debounce = false;
         static int curDebounce = 0;
+		static bool showNormal = false;
+		static bool showUV = false;
+
         // Switch currCarModel on specific key press
         if(glfwGetKey(window, GLFW_KEY_N)) {
             if(!debounce) {
@@ -655,10 +670,6 @@ class Dealership : public BaseProject {
             }
         }
 
-        //TODO: unnecessary when selector is removed from shader
-        static bool showNormal = false;
-        static bool showUV = false;
-
         // Hold SHIFT to run
         if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) {
             if(!debounce) {
@@ -674,80 +685,180 @@ class Dealership : public BaseProject {
             }
         }
 
-		static auto lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
-		auto lightPosOld = lightPos;
-		const auto lightStep = 0.2f;
+		// Hold ALT to change the light color, or don't hold to change light position
+		if(glfwGetKey(window, GLFW_KEY_LEFT_ALT)) {
+			// While holding ALT, we can modify the light color
+			if (glfwGetKey(window, GLFW_KEY_J)){
+				if (!debounce) {
+					debounce = true;
+					curDebounce = GLFW_KEY_J;
+					if (currentColorPtr == &colorX) {
+						currentColorPtr = &colorZ;
+						std::cout << "Switched to Z." << std::endl;
+					}
+					else if (currentColorPtr == &colorY) {
+						currentColorPtr = &colorX;
+						std::cout << "Switched to X." << std::endl;
+					}
+					else {
+						currentColorPtr = &colorY;
+						std::cout << "Switched to Y." << std::endl;
+					}
+				}
+			} else {
+				if((curDebounce == GLFW_KEY_J) && debounce) {
+					debounce = false;
+					curDebounce = 0;
+				}
+			}
+			if (glfwGetKey(window, GLFW_KEY_L)){
+				if (!debounce) {
+					debounce = true;
+					curDebounce = GLFW_KEY_L;
+					if (currentColorPtr == &colorX) {
+						currentColorPtr = &colorY;
+						std::cout << "Switched to Y." << std::endl;
+					}
+					else if (currentColorPtr == &colorY) {
+						currentColorPtr = &colorZ;
+						std::cout << "Switched to Z." << std::endl;
+					}
+					else {
+						currentColorPtr = &colorX;
+						std::cout << "Switched to X." << std::endl;
+					}
+				}
+			} else {
+				if((curDebounce == GLFW_KEY_L) && debounce) {
+					debounce = false;
+					curDebounce = 0;
+				}
+			}
+			if (glfwGetKey(window, GLFW_KEY_I)) {
+				if (!debounce) {
+					debounce = true;
+					curDebounce = GLFW_KEY_I;
+					*currentColorPtr += colorStep;
+					if (*currentColorPtr > 255.0f) {
+						*currentColorPtr = 255.0f;
+						std::cout << "Maximum reached." << std::endl;
+					}
+				}
+			} else {
+				if((curDebounce == GLFW_KEY_I) && debounce) {
+					debounce = false;
+					curDebounce = 0;
+				}
+			}
+			if (glfwGetKey(window, GLFW_KEY_K)) {
+				if (!debounce) {
+					debounce = true;
+					curDebounce = GLFW_KEY_K;
+					*currentColorPtr -= colorStep;
+					if (*currentColorPtr < 1.0f) {
+						*currentColorPtr = 1.0f;
+						std::cout << "Minimum reached." << std::endl;
+					}
+				}
+			} else {
+				if((curDebounce == GLFW_KEY_K) && debounce) {
+					debounce = false;
+					curDebounce = 0;
+				}
+			}
 
-		if(glfwGetKey(window, GLFW_KEY_J)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_J;
-				lightPos.x -= lightStep;
+			// Press R to reset the light's color
+			if(glfwGetKey(window, GLFW_KEY_R)) {
+				if(!debounce) {
+					debounce = true;
+					curDebounce = GLFW_KEY_R;
+					colorX = 1.0f;
+					colorY = 1.0f;
+					colorZ = 1.0f;
+				}
+			} else {
+				if((curDebounce == GLFW_KEY_R) && debounce) {
+					debounce = false;
+					curDebounce = 0;
+				}
 			}
 		} else {
-			if((curDebounce == GLFW_KEY_J) && debounce) {
-				debounce = false;
-				curDebounce = 0;
+			// If not holding ALT, modify the light's position
+			if (glfwGetKey(window, GLFW_KEY_J)) {
+				if (!debounce) {
+					debounce = true;
+					curDebounce = GLFW_KEY_J;
+					lightPos.x -= lightStep;
+				}
+			} else {
+				if ((curDebounce == GLFW_KEY_J) && debounce) {
+					debounce = false;
+					curDebounce = 0;
+				}
 			}
-		}
-		if(glfwGetKey(window, GLFW_KEY_L)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_L;
-				lightPos.x += lightStep;
+			if (glfwGetKey(window, GLFW_KEY_L)) {
+				if (!debounce) {
+					debounce = true;
+					curDebounce = GLFW_KEY_L;
+					lightPos.x += lightStep;
+				}
+			} else {
+				if ((curDebounce == GLFW_KEY_L) && debounce) {
+					debounce = false;
+					curDebounce = 0;
+				}
 			}
-		} else {
-			if((curDebounce == GLFW_KEY_L) && debounce) {
-				debounce = false;
-				curDebounce = 0;
+			if (glfwGetKey(window, GLFW_KEY_I)) {
+				if (!debounce) {
+					debounce = true;
+					curDebounce = GLFW_KEY_I;
+					lightPos.z -= lightStep;
+				}
+			} else {
+				if ((curDebounce == GLFW_KEY_I) && debounce) {
+					debounce = false;
+					curDebounce = 0;
+				}
 			}
-		}
-		if(glfwGetKey(window, GLFW_KEY_I)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_I;
-				lightPos.z -= lightStep;
+			if (glfwGetKey(window, GLFW_KEY_K)) {
+				if (!debounce) {
+					debounce = true;
+					curDebounce = GLFW_KEY_K;
+					lightPos.z += lightStep;
+				}
+			} else {
+				if ((curDebounce == GLFW_KEY_K) && debounce) {
+					debounce = false;
+					curDebounce = 0;
+				}
 			}
-		} else {
-			if((curDebounce == GLFW_KEY_I) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
-		if(glfwGetKey(window, GLFW_KEY_K)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_K;
-				lightPos.z += lightStep;
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_K) && debounce) {
-				debounce = false;
-				curDebounce = 0;
-			}
-		}
 
-		if(glfwGetKey(window, GLFW_KEY_R)) {
-			if(!debounce) {
-				debounce = true;
-				curDebounce = GLFW_KEY_R;
-				lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
-			}
-		} else {
-			if((curDebounce == GLFW_KEY_R) && debounce) {
-				debounce = false;
-				curDebounce = 0;
+			// Press R to reset the light's position
+			if(glfwGetKey(window, GLFW_KEY_R)) {
+				if(!debounce) {
+					debounce = true;
+					curDebounce = GLFW_KEY_R;
+					lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
+				}
+			} else {
+				if((curDebounce == GLFW_KEY_R) && debounce) {
+					debounce = false;
+					curDebounce = 0;
+				}
 			}
 		}
 
 		// Light position limits
-		if (lightPos.x < 0.0f) lightPos.x = 0.0f;
-		else if (lightPos.x > 12.0f) lightPos.x = 12.0f;
-		if (lightPos.z < 0.0f) lightPos.z = 0.0f;
-		else if (lightPos.z > 12.0f) lightPos.z = 12.0f;
+		if (lightPos.x < 0.2f) lightPos.x = 0.2f;
+		else if (lightPos.x > 11.8f) lightPos.x = 11.8f;
+		if (lightPos.z < 0.2f) lightPos.z = 0.2f;
+		else if (lightPos.z > 11.8f) lightPos.z = 11.8f;
 
 		if (lightPosOld != lightPos) std::cout << "lightPos = (" << lightPos.x << ", " << lightPos.y << ", " << lightPos.z << ")" << std::endl;
 		lightPosOld = lightPos;
+
+		if (colorOld.x != colorX || colorOld.y != colorY || colorOld.z != colorZ) std::cout << "Color = (" << colorX << ", " << colorY << ", " << colorZ << ")" << std::endl;
+		colorOld = glm::vec3(colorX, colorY, colorZ);
 
         GameLogic();
 
@@ -762,10 +873,10 @@ class Dealership : public BaseProject {
 		// Car Point light
 		gub.DlightPos = lightPos;
 		gub.DlightDir = glm::normalize(lightPos - glm::vec3(6.0f, 1.0f, 6.0f));
-		gub.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+		gub.DlightColor = glm::vec4(colorX, colorY, colorZ, 1.0f);
 		gub.AmbLightColor = glm::vec3(0.1f);
 		gub.eyePos = cameraPos;
-	
+
 		/*
 		glm::mat4 World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
 									  glm::vec3(6.0f, 0.1f, 6.0f)),
@@ -828,7 +939,7 @@ class Dealership : public BaseProject {
 		uboDoor.mvpMat = ViewPrj * uboDoor.mMat;
 		uboDoor.nMat = glm::inverse(glm::transpose(uboDoor.mMat));
 
-		uboSphere.mMat = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.3));
+		uboSphere.mMat = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2));
 		uboSphere.mvpMat = ViewPrj * uboSphere.mMat;
 		uboSphere.nMat = glm::inverse(glm::transpose(uboSphere.mMat));
 
@@ -841,7 +952,7 @@ class Dealership : public BaseProject {
 		// Mapping of the Door
 		DSDoor.map((int)currentImage, &uboDoor, sizeof(uboDoor), 0);
 		DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
-
+		// Mapping of the sphere
 		DSSphere.map((int)currentImage, &uboSphere, sizeof(uboSphere), 0);
 		DSSphere.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
