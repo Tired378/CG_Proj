@@ -21,6 +21,7 @@ struct MeshUniformBlock {
 };
 
 struct GlobalUniformBlock {
+	alignas(16) glm::vec3 DlightPos;
 	alignas(16) glm::vec3 DlightDir;
 	alignas(16) glm::vec3 DlightColor;
 	alignas(16) glm::vec3 AmbLightColor;
@@ -41,6 +42,13 @@ struct GlobalUniformBufferObject {
     alignas(16) glm::vec3 eyePos;
 };
 
+/*struct GlobalUniformBufferObject {
+	alignas(16) glm::vec3 lightPos;
+	alignas(16) glm::vec3 lightDir;
+	alignas(16) glm::vec4 lightColor;
+	alignas(16) glm::vec3 eyePos;
+};*/
+
 struct VertexMesh {
     alignas(16) glm::vec3 pos;
     alignas(16) glm::vec3 norm;
@@ -59,21 +67,22 @@ class Dealership : public BaseProject {
 	DescriptorSetLayout DSLCar1, DSLCar2;// , DSLCar;
 
 	// Vertex formats
-	VertexDescriptor VMesh, VShow;
+	VertexDescriptor VMesh/*, VShow*/;
 
 	// Pipelines [Shader couples]
 	Pipeline PMesh, PCar1, PCar2, PCar;
 
-	DescriptorSet DSEnv, DSShow, DSGubo, DSDoor;
+	DescriptorSet DSEnv, DSShow, DSGubo, DSDoor, DSSphere;
 	DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
 
 	// Models, textures and Descriptors (values assigned to the uniforms)
 	Model<VertexMesh> MEnv, MShow, MCar1, MCar2, MCar3, MCar4, MCar5, MDoor;
+	Model<VertexMesh> MSphere;
     //TODO: define car models array
 
 	// C++ storage for uniform variables
 	MeshUniformBlock uboCar;
-	UniformBufferObject uboEnv, uboShow, uboDoor;
+	UniformBufferObject uboEnv, uboShow, uboDoor, uboSphere;
 
 	GlobalUniformBlock gub;
     GlobalUniformBufferObject gubo;
@@ -131,7 +140,6 @@ class Dealership : public BaseProject {
 	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
 	void localInit() override {
 		// Descriptor Layouts [what will be passed to the shaders]
-		//TODO: Test
 		DSLCar.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
 					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
@@ -161,7 +169,7 @@ class Dealership : public BaseProject {
 		DSLEnv.init(this, {
 					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
 					{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
 				});
 
 		DSLGubo.init(this, {
@@ -182,7 +190,7 @@ class Dealership : public BaseProject {
 				         sizeof(glm::vec2), UV}
 				});
 
-        VShow.init(this, {
+        /*VShow.init(this, {
                 {0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
         }, {
                    {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
@@ -191,7 +199,7 @@ class Dealership : public BaseProject {
                            sizeof(glm::vec3), NORMAL},
                    {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
                            sizeof(glm::vec2), UV}
-               });
+               });*/
 
 		
 
@@ -202,6 +210,7 @@ class Dealership : public BaseProject {
 														//shaders/BlinnNormMapFrag.spv -- MeshFrag.spv*/
 		//PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", { &DSLGubo, &DSLCar });
 
+		//PLight.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnPointLightFrag.spv", {&DSLEnv});
 		PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLEnv});
 		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
@@ -213,7 +222,10 @@ class Dealership : public BaseProject {
 		MEnv.initMesh(this, &VMesh);
 
         createShowcaseMesh(MShow.vertices, MShow.indices);
-        MShow.initMesh(this, &VShow);
+        MShow.initMesh(this, &VMesh);
+
+		createSphereMesh(MSphere.vertices, MSphere.indices);
+		MSphere.initMesh(this, &VMesh);
 
 		MCar1.init(this, &VMesh, "Models/Car1.gltf", GLTF);
 		MCar2.init(this, &VMesh, "Models/Car2.obj", OBJ);
@@ -265,20 +277,26 @@ class Dealership : public BaseProject {
 		DSEnv.init(this, &DSLEnv, {
 				{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
 				{1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-				{2, TEXTURE, 0, &TEnv}
+				{2, TEXTURE, 0, &TEnv},
 		});
 
 		DSShow.init(this, &DSLEnv, {
 				{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
 				{1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-				{2, TEXTURE, 0, &TEnv}
+				{2, TEXTURE, 0, &TEnv},
 		});
 
 		DSDoor.init(this, &DSLEnv, {
 			   {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
 			   {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-			   {2, TEXTURE, 0, &TDoor}
+			   {2, TEXTURE, 0, &TDoor},
 			});
+
+		DSSphere.init(this, &DSLEnv, {
+				{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+				{1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
+				{2, TEXTURE, 0, &TEnv},
+		});
 
 		//DSCar1.init(this, &DSLCar, {
 		DSCar1.init(this, &DSLCar1, {
@@ -342,6 +360,7 @@ class Dealership : public BaseProject {
 		DSDoor.cleanup(); 
 		DSEnv.cleanup();
         DSShow.cleanup();
+		DSSphere.cleanup();
 	}
 
 	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -378,6 +397,7 @@ class Dealership : public BaseProject {
 		MEnv.cleanup();
         MShow.cleanup();
 		MDoor.cleanup();
+		MSphere.cleanup();
 
 		// Cleanup descriptor set layouts
 		DSLCar1.cleanup();
@@ -405,17 +425,22 @@ class Dealership : public BaseProject {
 		vkCmdDrawIndexed(commandBuffer,
 				static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
 
+
         MShow.bind(commandBuffer);
         DSShow.bind(commandBuffer, PMesh, 0, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MShow.indices.size()), 1, 0, 0, 0);
 
+		MSphere.bind(commandBuffer);
+		DSSphere.bind(commandBuffer, PMesh, 0, currentImage);
+		vkCmdDrawIndexed(commandBuffer,
+		                 static_cast<uint32_t>(MSphere.indices.size()), 1, 0, 0, 0);
+
 		MDoor.bind(commandBuffer);
 		DSDoor.bind(commandBuffer, PMesh, 0, currentImage);
 		vkCmdDrawIndexed(commandBuffer,
 			static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
-					
-		
+
 		switch(currCarModel) {
 			case 0:
 				PCar1.bind(commandBuffer);
@@ -649,15 +674,94 @@ class Dealership : public BaseProject {
             }
         }
 
+		static auto lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
+		auto lightPosOld = lightPos;
+		const auto lightStep = 0.2f;
+
+		if(glfwGetKey(window, GLFW_KEY_J)) {
+			if(!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_J;
+				lightPos.x -= lightStep;
+			}
+		} else {
+			if((curDebounce == GLFW_KEY_J) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
+		if(glfwGetKey(window, GLFW_KEY_L)) {
+			if(!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_L;
+				lightPos.x += lightStep;
+			}
+		} else {
+			if((curDebounce == GLFW_KEY_L) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
+		if(glfwGetKey(window, GLFW_KEY_I)) {
+			if(!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_I;
+				lightPos.z -= lightStep;
+			}
+		} else {
+			if((curDebounce == GLFW_KEY_I) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
+		if(glfwGetKey(window, GLFW_KEY_K)) {
+			if(!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_K;
+				lightPos.z += lightStep;
+			}
+		} else {
+			if((curDebounce == GLFW_KEY_K) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
+
+		if(glfwGetKey(window, GLFW_KEY_R)) {
+			if(!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_R;
+				lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
+			}
+		} else {
+			if((curDebounce == GLFW_KEY_R) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
+
+		// Light position limits
+		if (lightPos.x < 0.0f) lightPos.x = 0.0f;
+		else if (lightPos.x > 12.0f) lightPos.x = 12.0f;
+		if (lightPos.z < 0.0f) lightPos.z = 0.0f;
+		else if (lightPos.z > 12.0f) lightPos.z = 12.0f;
+
+		if (lightPosOld != lightPos) std::cout << "lightPos = (" << lightPos.x << ", " << lightPos.y << ", " << lightPos.z << ")" << std::endl;
+		lightPosOld = lightPos;
+
         GameLogic();
 
         //TODO: remove global uniform buffer object
+		//global room illumination
         gubo.selector = glm::vec3(showNormal || showUV ? 0 : 1, showNormal ? 1 : 0, showUV ? 1 : 0);
-		gubo.lightDir = glm::normalize(glm::vec3(1, 2, 3));
+		//gubo.lightPos = lightPos;
+		gubo.lightDir = glm::normalize(glm::vec3(0, 1, 0));
 		gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gubo.eyePos = cameraPos;
 
-		gub.DlightDir = glm::normalize(glm::vec3(1, 2, 3));
+		// Car Point light
+		gub.DlightPos = lightPos;
+		gub.DlightDir = glm::normalize(lightPos - glm::vec3(6.0f, 1.0f, 6.0f));
 		gub.DlightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
 		gub.AmbLightColor = glm::vec3(0.1f);
 		gub.eyePos = cameraPos;
@@ -724,18 +828,25 @@ class Dealership : public BaseProject {
 		uboDoor.mvpMat = ViewPrj * uboDoor.mMat;
 		uboDoor.nMat = glm::inverse(glm::transpose(uboDoor.mMat));
 
+		uboSphere.mMat = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.3));
+		uboSphere.mvpMat = ViewPrj * uboSphere.mMat;
+		uboSphere.nMat = glm::inverse(glm::transpose(uboSphere.mMat));
+
         // Mapping of the room
 		DSEnv.map((int)currentImage, &uboEnv, sizeof(uboEnv), 0);
         DSEnv.map((int)currentImage, &gubo, sizeof(gubo), 1);
         // Mapping of the Showcase platform
         DSShow.map((int)currentImage, &uboShow, sizeof(uboShow), 0);
         DSShow.map((int)currentImage, &gubo, sizeof(gubo), 1);
-
 		// Mapping of the Door
 		DSDoor.map((int)currentImage, &uboDoor, sizeof(uboDoor), 0);
 		DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
-		DSGubo.map(currentImage, &gub, sizeof(gub), 0);
+		DSSphere.map((int)currentImage, &uboSphere, sizeof(uboSphere), 0);
+		DSSphere.map((int)currentImage, &gubo, sizeof(gubo), 1);
+
+
+		DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
 
         switch(currCarModel) {
             case 0:
@@ -802,6 +913,7 @@ class Dealership : public BaseProject {
 
 	static void createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
     static void createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
+	static void createSphereMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
 };
 
 #include "Meshes.hpp"

@@ -105,3 +105,62 @@ void Dealership::createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<u
     vIdx.push_back(vDef.size()-3); vIdx.push_back(vDef.size()-1); vIdx.push_back(3);
     vIdx.push_back(5); vIdx.push_back(vDef.size()-1); vIdx.push_back(3);
 }
+
+void Dealership::createSphereMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx) {
+	// The primitive built here is a sphere of radius 1, centered in the origin, on which the Mars texture is applied seamless.
+
+	uint32_t numRings = 32, numV = 256, firstVertex, initialVertexIdx = 0;
+	float uCoordStep = 1.0f / (float)numV;
+	float vCoordStep = 1.0f / (float)numRings;
+	float x, y ,z;
+	float InitHeightAngle = glm::radians(180.0f / (float)numRings);   // inclination
+	float InitRingAngle = glm::radians(360.0f / (float)numV);       // azimuth
+	float currentRingAngle = 0, currentHeightAngle = InitHeightAngle;
+	float currentUCoord = 0, currentVCoord = vCoordStep;
+
+	//vDef.push_back({{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}});	// vertex 0 - Position, Normal and uv
+	for (uint32_t i = 0; i < numV+1; i++) {
+		x = sin(currentHeightAngle) * cos(currentRingAngle);
+		z = sin(currentHeightAngle) * sin(currentRingAngle);
+		y = cos(currentHeightAngle);
+		vDef.push_back({{x, y, z},
+		                {x,  y, z},
+		                {currentUCoord, currentVCoord}});    // vertex 0 - Position, Normal and uv
+		currentRingAngle += InitRingAngle;
+		currentUCoord += uCoordStep;
+	}
+
+	// internal rings
+	for (uint32_t ring = 0; ring < numRings-2; ring++) {
+		currentHeightAngle += InitHeightAngle;
+		currentRingAngle = 0;
+		currentVCoord += vCoordStep;
+		currentUCoord = 0;
+		firstVertex = vDef.size();
+
+		for (uint32_t i = 0; i < numV+1; i++) {
+			x = sin(currentHeightAngle) * cos(currentRingAngle);
+			z = sin(currentHeightAngle) * sin(currentRingAngle);
+			y = cos(currentHeightAngle);
+			vDef.push_back({{x, y, z},
+			                {x,  y, z},
+			                {currentUCoord, currentVCoord}});    // vertex 0 - Position, Normal and uv
+			currentRingAngle += InitRingAngle;
+			currentUCoord += uCoordStep;
+		}
+
+		for (uint32_t t = 0; t < numV; t++){
+			vIdx.push_back(firstVertex + t); vIdx.push_back(firstVertex-numV-1 + t); vIdx.push_back(firstVertex-numV + t);
+			vIdx.push_back(firstVertex + t); vIdx.push_back(firstVertex + t + 1); vIdx.push_back(firstVertex-numV + t);
+		}
+	}
+
+	currentUCoord = 0;
+	for (uint32_t t = 0; t < numV; t++){
+		vDef.push_back({{0.0f, 1.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {currentUCoord, 0.0f}});	// vertex 0 - Position, Normal and uv
+		vIdx.push_back(vDef.size()-1); vIdx.push_back(initialVertexIdx + t); vIdx.push_back(initialVertexIdx + t + 1);
+		vDef.push_back({{0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {currentUCoord, 1.0f}});	// vertex 0 - Position, Normal and uv
+		vIdx.push_back(vDef.size()-1); vIdx.push_back(firstVertex + t); vIdx.push_back(firstVertex + t + 1);
+		currentUCoord += uCoordStep;
+	}
+}
