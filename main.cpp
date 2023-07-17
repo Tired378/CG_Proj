@@ -12,20 +12,20 @@
 //        mat4  : alignas(16)
 
 struct MeshUniformBlock {
-	alignas(4) float amb;
-	alignas(4) float gamma;
-	alignas(16) glm::vec3 sColor;
-	alignas(16) glm::mat4 mvpMat;
-	alignas(16) glm::mat4 mMat;
-	alignas(16) glm::mat4 nMat;
+    alignas(4) float amb;
+    alignas(4) float gamma;
+    alignas(16) glm::vec3 sColor;
+    alignas(16) glm::mat4 mvpMat;
+    alignas(16) glm::mat4 mMat;
+    alignas(16) glm::mat4 nMat;
 };
 
 struct GlobalUniformBlock {
-	alignas(16) glm::vec3 DlightPos;
-	alignas(16) glm::vec3 DlightDir;
-	alignas(16) glm::vec3 DlightColor;
-	alignas(16) glm::vec3 AmbLightColor;
-	alignas(16) glm::vec3 eyePos;
+    alignas(16) glm::vec3 DlightPos;
+    alignas(16) glm::vec3 DlightDir;
+    alignas(16) glm::vec3 DlightColor;
+    alignas(16) glm::vec3 AmbLightColor;
+    alignas(16) glm::vec3 eyePos;
 };
 
 struct UniformBufferObject {
@@ -43,10 +43,10 @@ struct GlobalUniformBufferObject {
 };
 
 /*struct GlobalUniformBufferObject {
-	alignas(16) glm::vec3 lightPos;
-	alignas(16) glm::vec3 lightDir;
-	alignas(16) glm::vec4 lightColor;
-	alignas(16) glm::vec3 eyePos;
+    alignas(16) glm::vec3 lightPos;
+    alignas(16) glm::vec3 lightDir;
+    alignas(16) glm::vec4 lightColor;
+    alignas(16) glm::vec3 eyePos;
 };*/
 
 struct VertexMesh {
@@ -55,44 +55,44 @@ struct VertexMesh {
     alignas(8) glm::vec2 UV;
 };
 
-// MAIN ! 
+// MAIN !
 class Dealership : public BaseProject {
-	protected:
+    protected:
 
-	// Current aspect ratio (used by the callback that resized the window
-	float Ar;
+    // Current aspect ratio (used by the callback that resized the window
+    float Ar;
 
-	// Descriptor Layouts ["classes" of what will be passed to the shaders]
-	DescriptorSetLayout DSLCar, DSLGubo, DSLEnv;
-	DescriptorSetLayout DSLCar1, DSLCar2;// , DSLCar;
+    // Descriptor Layouts ["classes" of what will be passed to the shaders]
+    DescriptorSetLayout DSLCar, DSLGubo, DSLEnv;
+    DescriptorSetLayout DSLCar1, DSLCar2;// , DSLCar;
 
-	// Vertex formats
-	VertexDescriptor VMesh/*, VShow*/;
+    // Vertex formats
+    VertexDescriptor VMesh/*, VShow*/;
 
-	// Pipelines [Shader couples]
-	Pipeline PMesh, PCar1, PCar2, PCar;
+    // Pipelines [Shader couples]
+    Pipeline PMesh, PCar1, PCar2, PCar;
 
-	DescriptorSet DSEnv, DSShow, DSGubo, DSDoor, DSSphere;
-	DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
+    DescriptorSet DSEnv, DSShow, DSGubo, DSDoor, DSSphere;
+    DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
 
-	// Models, textures and Descriptors (values assigned to the uniforms)
-	Model<VertexMesh> MEnv, MShow, MCar1, MCar2, MCar3, MCar4, MCar5, MDoor;
-	Model<VertexMesh> MSphere;
+    // Models, textures and Descriptors (values assigned to the uniforms)
+    Model<VertexMesh> MEnv, MShow, MCar1, MCar2, MCar3, MCar4, MCar5, MDoor;
+    Model<VertexMesh> MSphere;
     //TODO: define car models array
 
-	// C++ storage for uniform variables
-	MeshUniformBlock uboCar;
-	UniformBufferObject uboEnv, uboShow, uboDoor, uboSphere;
+    // C++ storage for uniform variables
+    MeshUniformBlock uboCar;
+    UniformBufferObject uboEnv, uboShow, uboDoor, uboSphere;
 
-	GlobalUniformBlock gub;
+    GlobalUniformBlock gub;
     GlobalUniformBufferObject gubo;
 
-	Texture TEnv, TShow, TDoor;
-	Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
-	Texture TCar2_0, TCar2_1, TCar2_2, TCar2_3;
-	Texture TCar3_0, TCar3_1, TCar3_2, TCar3_3;
-	Texture TCar4_0, TCar4_1, TCar4_2, TCar4_3;
-	Texture TCar5_0, TCar5_1, TCar5_2, TCar5_3;
+    Texture TEnv, TEnv_1, TEnv_2, TShow, TDoor;
+    Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
+    Texture TCar2_0, TCar2_1, TCar2_2, TCar2_3;
+    Texture TCar3_0, TCar3_1, TCar3_2, TCar3_3;
+    Texture TCar4_0, TCar4_1, TCar4_2, TCar4_3;
+    Texture TCar5_0, TCar5_1, TCar5_2, TCar5_3;
 
     // Other application parameters
     int currCarModel = 0;
@@ -112,83 +112,85 @@ class Dealership : public BaseProject {
     const float ShowRotSpeed = glm::radians(-5.0f);
     float ShowRot = 0.0f;
 
-	// Here you set the main application parameters
-	void setWindowParameters() override {
-		// window size, title and initial background
-		windowWidth = 800;
-		windowHeight = 600;
-		windowTitle = "Car Dealership";
-    	windowResizable = GLFW_TRUE;
-		initialBackgroundColor = {0.0f, 0.005f, 0.01f, 1.0f};
-		
-		// Descriptor pool sizes
-		/* Dealership */
-		/* Update the requirements for the size of the pool */
-		uniformBlocksInPool = 28;
-		texturesInPool = 27;
-		setsInPool = 28;
-		
-		Ar = (float)windowWidth / (float)windowHeight;
-	}
-	
-	// What to do when the window changes size
-	void onWindowResize(int w, int h) override {
-		Ar = (float)w / (float)h;
-	}
-	
-	// Here you load and setup all your Vulkan Models and Textures.
-	// Here you also create your Descriptor set layouts and load the shaders for the pipelines
-	void localInit() override {
-		// Descriptor Layouts [what will be passed to the shaders]
-		DSLCar.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-			});
+    // Here you set the main application parameters
+    void setWindowParameters() override {
+        // window size, title and initial background
+        windowWidth = 800;
+        windowHeight = 600;
+        windowTitle = "Car Dealership";
+        windowResizable = GLFW_TRUE;
+        initialBackgroundColor = {0.0f, 0.005f, 0.01f, 1.0f};
+        
+        // Descriptor pool sizes
+        /* Dealership */
+        /* Update the requirements for the size of the pool */
+        uniformBlocksInPool = 28;
+        texturesInPool = 27;
+        setsInPool = 28;
+        
+        Ar = (float)windowWidth / (float)windowHeight;
+    }
+    
+    // What to do when the window changes size
+    void onWindowResize(int w, int h) override {
+        Ar = (float)w / (float)h;
+    }
+    
+    // Here you load and setup all your Vulkan Models and Textures.
+    // Here you also create your Descriptor set layouts and load the shaders for the pipelines
+    void localInit() override {
+        // Descriptor Layouts [what will be passed to the shaders]
+        DSLCar.init(this, {
+                    {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+                    {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+            });
 
-		DSLCar1.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-				});
+        DSLCar1.init(this, {
+                    {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+                    {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+                });
 
-		DSLCar2.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-				});/*
-		DSLCar.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-				});*/
+        DSLCar2.init(this, {
+                    {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+                    {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                });/*
+        DSLCar.init(this, {
+                    {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+                    {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+                });*/
 
-		DSLEnv.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
-					{1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-				});
+        DSLEnv.init(this, {
+                    {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
+                    {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+                    {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                });
 
-		DSLGubo.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
-			});
+        DSLGubo.init(this, {
+                    {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
+            });
 
         
 
-		// Vertex descriptors
-		VMesh.init(this, {
-				  {0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
-				}, {
-				  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
-				         sizeof(glm::vec3), POSITION},
-				  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
-				         sizeof(glm::vec3), NORMAL},
-				  {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
-				         sizeof(glm::vec2), UV}
-				});
+        // Vertex descriptors
+        VMesh.init(this, {
+                  {0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
+                }, {
+                  {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
+                         sizeof(glm::vec3), POSITION},
+                  {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
+                         sizeof(glm::vec3), NORMAL},
+                  {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
+                         sizeof(glm::vec2), UV}
+                });
 
         /*VShow.init(this, {
                 {0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
@@ -201,229 +203,235 @@ class Dealership : public BaseProject {
                            sizeof(glm::vec2), UV}
                });*/
 
-		
+        
 
-		// Pipelines [Shader couples]
-		PCar1.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1ShaderFrag.spv", {&DSLGubo, &DSLCar1});
-		PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
-		PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/CarShaderFrag.spv", {&DSLGubo, &DSLCar});
-														//shaders/BlinnNormMapFrag.spv -- MeshFrag.spv*/
-		//PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", { &DSLGubo, &DSLCar });
+        // Pipelines [Shader couples]
+        PCar1.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1ShaderFrag.spv", {&DSLGubo, &DSLCar1});
+        PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
+        PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/CarShaderFrag.spv", {&DSLGubo, &DSLCar});
+                                                        //shaders/BlinnNormMapFrag.spv -- MeshFrag.spv*/
+        //PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", { &DSLGubo, &DSLCar });
 
-		//PLight.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnPointLightFrag.spv", {&DSLEnv});
-		PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnNormMap2.spv", {&DSLEnv});
-		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
+        //PLight.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnPointLightFrag.spv", {&DSLEnv});
+        PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnNormMap2.spv", {&DSLEnv});
+        PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
         /*PShow.init(this, &VShow, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLShow});
         PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);*/
 
-		/* Models */
-		createEnvMesh(MEnv.vertices, MEnv.indices);
-		MEnv.initMesh(this, &VMesh);
+        /* Models */
+        createEnvMesh(MEnv.vertices, MEnv.indices);
+        MEnv.initMesh(this, &VMesh);
 
         createShowcaseMesh(MShow.vertices, MShow.indices);
         MShow.initMesh(this, &VMesh);
 
-		createSphereMesh(MSphere.vertices, MSphere.indices);
-		MSphere.initMesh(this, &VMesh);
+        createSphereMesh(MSphere.vertices, MSphere.indices);
+        MSphere.initMesh(this, &VMesh);
 
-		MCar1.init(this, &VMesh, "Models/Car1.gltf", GLTF);
-		MCar2.init(this, &VMesh, "Models/Car2.obj", OBJ);
-		MCar3.init(this, &VMesh, "Models/Car3.obj", OBJ);
-		MCar4.init(this, &VMesh, "Models/Car4.obj", OBJ);
-		MCar5.init(this, &VMesh, "Models/Car5.obj", OBJ);
+        MCar1.init(this, &VMesh, "Models/Car1.gltf", GLTF);
+        MCar2.init(this, &VMesh, "Models/Car2.obj", OBJ);
+        MCar3.init(this, &VMesh, "Models/Car3.obj", OBJ);
+        MCar4.init(this, &VMesh, "Models/Car4.obj", OBJ);
+        MCar5.init(this, &VMesh, "Models/Car5.obj", OBJ);
 
-		MDoor.init(this, &VMesh, "models/door/door.gltf", GLTF);
-		/* Textures */
-		TCar1_0.init(this, "textures/Car1/cb_car_baseColor.png");
-		TCar1_1.init(this, "textures/Car1/cb_car_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar1_2.init(this, "textures/Car1/cb_car_metallicRoughness.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar1_3.init(this, "textures/Car1/cb_car_emissive.png", VK_FORMAT_R8G8B8A8_UNORM);
+        MDoor.init(this, &VMesh, "models/door/door.gltf", GLTF);
+        /* Textures */
+        TCar1_0.init(this, "textures/Car1/cb_car_baseColor.png");
+        TCar1_1.init(this, "textures/Car1/cb_car_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TCar1_2.init(this, "textures/Car1/cb_car_metallicRoughness.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TCar1_3.init(this, "textures/Car1/cb_car_emissive.png", VK_FORMAT_R8G8B8A8_UNORM);
 
-		TCar2_0.init(this, "textures/Car2/baseColor.png");
-		TCar2_1.init(this, "textures/Car2/roughness.png", VK_FORMAT_R8G8B8A8_UNORM);
-		/*TCar2_2.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar2_3.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
+        TCar2_0.init(this, "textures/Car2/baseColor.png");
+        TCar2_1.init(this, "textures/Car2/roughness.png", VK_FORMAT_R8G8B8A8_UNORM);
+        /*TCar2_2.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TCar2_3.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
-		TCar3_0.init(this, "textures/Car3/baseColor.png");
-		/*TCar3_1.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar3_2.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar3_3.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
+        TCar3_0.init(this, "textures/Car3/baseColor.png");
+        /*TCar3_1.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TCar3_2.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TCar3_3.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
-		TCar4_0.init(this, "textures/Car4/baseColor.png");
-		/*TCar4_1.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar4_2.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar4_3.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
+        TCar4_0.init(this, "textures/Car4/baseColor.png");
+        /*TCar4_1.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TCar4_2.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TCar4_3.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
-		TCar5_0.init(this, "textures/Car5/baseColor.png");
-		/*TCar5_1.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar5_2.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-		TCar5_3.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
+        TCar5_0.init(this, "textures/Car5/baseColor.png");
+        /*TCar5_1.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TCar5_2.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TCar5_3.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
-		TEnv.init(this, "textures/TextureRoom.jpg");
+        TEnv.init(this, "textures/TextureRoom2.jpg");
+        TEnv_1.init(this, "textures/TextureRoom_roughness.jpg", VK_FORMAT_R8G8B8A8_UNORM);
+        TEnv_2.init(this, "textures/TextureRoom_norm.jpg", VK_FORMAT_R8G8B8A8_UNORM);
 
-		TDoor.init(this, "textures/door/Door_baseColor.jpeg");
-	}
-	
-	// Here you create your pipelines and Descriptor Sets!
-	void pipelinesAndDescriptorSetsInit() override {
-		// This creates a new pipeline (with the current surface), using its shaders
-		PMesh.create();
-		PCar1.create();
-		PCar2.create();
-		PCar.create();
+        TDoor.init(this, "textures/door/Door_baseColor.jpeg");
+    }
+    
+    // Here you create your pipelines and Descriptor Sets!
+    void pipelinesAndDescriptorSetsInit() override {
+        // This creates a new pipeline (with the current surface), using its shaders
+        PMesh.create();
+        PCar1.create();
+        PCar2.create();
+        PCar.create();
 
-		// Here you define the data set
-		DSEnv.init(this, &DSLEnv, {
-				{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-				{1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-				{2, TEXTURE, 0, &TEnv},
-		});
+        // Here you define the data set
+        DSEnv.init(this, &DSLEnv, {
+                {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+                {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
+                {2, TEXTURE, 0, &TEnv},
+                {3, TEXTURE, 0, &TEnv_1},
+                {4, TEXTURE, 0, &TEnv_2},
+        });
 
-		DSShow.init(this, &DSLEnv, {
-				{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-				{1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-				{2, TEXTURE, 0, &TEnv},
-		});
+        DSShow.init(this, &DSLEnv, {
+                {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+                {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
+                {2, TEXTURE, 0, &TEnv},
+        });
 
-		DSDoor.init(this, &DSLEnv, {
-			   {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-			   {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-			   {2, TEXTURE, 0, &TDoor},
-			});
+        DSDoor.init(this, &DSLEnv, {
+               {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+               {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
+               {2, TEXTURE, 0, &TDoor},
+            });
 
-		DSSphere.init(this, &DSLEnv, {
-				{0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-				{1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-				{2, TEXTURE, 0, &TEnv},
-		});
+        DSSphere.init(this, &DSLEnv, {
+                {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
+                {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
+                {2, TEXTURE, 0, &TEnv},
+        });
 
-		//DSCar1.init(this, &DSLCar, {
-		DSCar1.init(this, &DSLCar1, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TCar1_0},
-					{2, TEXTURE, 0, &TCar1_1},
-					{3, TEXTURE, 0, &TCar1_2},
-					{4, TEXTURE, 0, &TCar1_3}
+        //DSCar1.init(this, &DSLCar, {
+        DSCar1.init(this, &DSLCar1, {
+                    {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TCar1_0},
+                    {2, TEXTURE, 0, &TCar1_1},
+                    {3, TEXTURE, 0, &TCar1_2},
+                    {4, TEXTURE, 0, &TCar1_3}
 
-		});
+        });
 
-		//DSCar2.init(this, &DSLCar, {
-		DSCar2.init(this, &DSLCar2, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TCar2_0},
-					{2, TEXTURE, 0, &TCar2_1},
+        //DSCar2.init(this, &DSLCar, {
+        DSCar2.init(this, &DSLCar2, {
+                    {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TCar2_0},
+                    {2, TEXTURE, 0, &TCar2_1},
 
-			});
+            });
 
-		//DSCar3.init(this, &DSLCar, {
-		DSCar3.init(this, &DSLCar, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TCar3_0}
+        //DSCar3.init(this, &DSLCar, {
+        DSCar3.init(this, &DSLCar, {
+                    {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TCar3_0}
 
-			});
+            });
 
-		//DSCar4.init(this, &DSLCar, {
-		DSCar4.init(this, &DSLCar, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TCar4_0}
+        //DSCar4.init(this, &DSLCar, {
+        DSCar4.init(this, &DSLCar, {
+                    {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TCar4_0}
 
-			});
-		
-		//DSCar5.init(this, &DSLCar, {
-		DSCar5.init(this, &DSLCar, {
-					{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-					{1, TEXTURE, 0, &TCar5_0}
+            });
+        
+        //DSCar5.init(this, &DSLCar, {
+        DSCar5.init(this, &DSLCar, {
+                    {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TCar5_0}
 
-			});
+            });
 
-		DSGubo.init(this, &DSLGubo, {
-					{0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
-			});
-	}
+        DSGubo.init(this, &DSLGubo, {
+                    {0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
+            });
+    }
 
-	// Here you destroy your pipelines and Descriptor Sets!
-	// All the object classes defined in Starter.hpp have a method .cleanup() for this purpose
-	void pipelinesAndDescriptorSetsCleanup() override {
-		// Cleanup pipelines
-		PMesh.cleanup();
-		PCar1.cleanup();
-		PCar2.cleanup();
-		PCar.cleanup();
+    // Here you destroy your pipelines and Descriptor Sets!
+    // All the object classes defined in Starter.hpp have a method .cleanup() for this purpose
+    void pipelinesAndDescriptorSetsCleanup() override {
+        // Cleanup pipelines
+        PMesh.cleanup();
+        PCar1.cleanup();
+        PCar2.cleanup();
+        PCar.cleanup();
 
-		DSCar1.cleanup();
-		DSCar2.cleanup();
-		DSCar3.cleanup();
-		DSCar4.cleanup();
-		DSCar5.cleanup();
-		DSGubo.cleanup();
-		DSDoor.cleanup(); 
-		DSEnv.cleanup();
+        DSCar1.cleanup();
+        DSCar2.cleanup();
+        DSCar3.cleanup();
+        DSCar4.cleanup();
+        DSCar5.cleanup();
+        DSGubo.cleanup();
+        DSDoor.cleanup();
+        DSEnv.cleanup();
         DSShow.cleanup();
-		DSSphere.cleanup();
-	}
+        DSSphere.cleanup();
+    }
 
-	// Here you destroy all the Models, Texture and Desc. Set Layouts you created!
-	// All the object classes defined in Starter.hpp have a method .cleanup() for this purpose
-	// You also have to destroy the pipelines: since they need to be rebuilt, they have two different
-	// methods: .cleanup() recreates them, while .destroy() delete them completely
-	void localCleanup() override {
-		// Cleanup textures
-		TCar1_0.cleanup();
-		TCar1_1.cleanup();
-		TCar1_2.cleanup();
-		TCar1_3.cleanup();
+    // Here you destroy all the Models, Texture and Desc. Set Layouts you created!
+    // All the object classes defined in Starter.hpp have a method .cleanup() for this purpose
+    // You also have to destroy the pipelines: since they need to be rebuilt, they have two different
+    // methods: .cleanup() recreates them, while .destroy() delete them completely
+    void localCleanup() override {
+        // Cleanup textures
+        TCar1_0.cleanup();
+        TCar1_1.cleanup();
+        TCar1_2.cleanup();
+        TCar1_3.cleanup();
 
-		TCar2_0.cleanup();
-		TCar2_1.cleanup();
+        TCar2_0.cleanup();
+        TCar2_1.cleanup();
 
-		TCar3_0.cleanup();
+        TCar3_0.cleanup();
 
-		TCar4_0.cleanup();
+        TCar4_0.cleanup();
 
-		TCar5_0.cleanup();
+        TCar5_0.cleanup();
 
-		TEnv.cleanup();
+        TEnv.cleanup();
+        TEnv_1.cleanup();
+        TEnv_2.cleanup();
         //TShow.cleanup();
 
-		TDoor.cleanup();
+        TDoor.cleanup();
 
-		// Cleanup models
-		MCar1.cleanup();
-		MCar2.cleanup();
-		MCar3.cleanup();
-		MCar4.cleanup();
-		MCar5.cleanup();
-		MEnv.cleanup();
+        // Cleanup models
+        MCar1.cleanup();
+        MCar2.cleanup();
+        MCar3.cleanup();
+        MCar4.cleanup();
+        MCar5.cleanup();
+        MEnv.cleanup();
         MShow.cleanup();
-		MDoor.cleanup();
-		MSphere.cleanup();
+        MDoor.cleanup();
+        MSphere.cleanup();
 
-		// Cleanup descriptor set layouts
-		DSLCar1.cleanup();
-		DSLCar2.cleanup();
-		//DSLCar.cleanup();
-		DSLCar.cleanup();
-		DSLGubo.cleanup();
-		DSLEnv.cleanup();
-		
-		// Destroys the pipelines
-		PMesh.destroy();
-		PCar1.destroy();
-		PCar2.destroy();
-		PCar.destroy();
-	}
-	
-	// Here it is the creation of the command buffer:
-	// You send to the GPU all the objects you want to draw,
-	// with their buffers and textures
-	void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
+        // Cleanup descriptor set layouts
+        DSLCar1.cleanup();
+        DSLCar2.cleanup();
+        //DSLCar.cleanup();
+        DSLCar.cleanup();
+        DSLGubo.cleanup();
+        DSLEnv.cleanup();
+        
+        // Destroys the pipelines
+        PMesh.destroy();
+        PCar1.destroy();
+        PCar2.destroy();
+        PCar.destroy();
+    }
+    
+    // Here it is the creation of the command buffer:
+    // You send to the GPU all the objects you want to draw,
+    // with their buffers and textures
+    void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
 
-		PMesh.bind(commandBuffer);
-		MEnv.bind(commandBuffer);
-		DSEnv.bind(commandBuffer, PMesh, 0, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
+        PMesh.bind(commandBuffer);
+        MEnv.bind(commandBuffer);
+        DSEnv.bind(commandBuffer, PMesh, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
 
 
         MShow.bind(commandBuffer);
@@ -431,84 +439,84 @@ class Dealership : public BaseProject {
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MShow.indices.size()), 1, 0, 0, 0);
 
-		MSphere.bind(commandBuffer);
-		DSSphere.bind(commandBuffer, PMesh, 0, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-		                 static_cast<uint32_t>(MSphere.indices.size()), 1, 0, 0, 0);
+        MSphere.bind(commandBuffer);
+        DSSphere.bind(commandBuffer, PMesh, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MSphere.indices.size()), 1, 0, 0, 0);
 
-		MDoor.bind(commandBuffer);
-		DSDoor.bind(commandBuffer, PMesh, 0, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
+        MDoor.bind(commandBuffer);
+        DSDoor.bind(commandBuffer, PMesh, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+            static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
 
-		switch(currCarModel) {
-			case 0:
-				PCar1.bind(commandBuffer);
-				DSGubo.bind(commandBuffer, PCar1, 0, currentImage);
-				MCar1.bind(commandBuffer);
-				DSCar1.bind(commandBuffer, PCar1, 1, currentImage);
-				vkCmdDrawIndexed(commandBuffer,
-				                 static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
-				break;
-			case 1:
-				PCar2.bind(commandBuffer);
-				DSGubo.bind(commandBuffer, PCar2, 0, currentImage);
-				MCar2.bind(commandBuffer);
-				DSCar2.bind(commandBuffer, PCar2, 1, currentImage);
-				vkCmdDrawIndexed(commandBuffer,
-				                 static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);
-				break;
-			case 2:
-				PCar.bind(commandBuffer);
-				DSGubo.bind(commandBuffer, PCar, 0, currentImage);
-				MCar3.bind(commandBuffer);
-				DSCar3.bind(commandBuffer, PCar, 1, currentImage);
-				vkCmdDrawIndexed(commandBuffer,
-				                 static_cast<uint32_t>(MCar3.indices.size()), 1, 0, 0, 0);
-				break;
-			case 3:
-				PCar.bind(commandBuffer);
-				DSGubo.bind(commandBuffer, PCar, 0, currentImage);
-				MCar4.bind(commandBuffer);
-				DSCar4.bind(commandBuffer, PCar, 1, currentImage);
-				vkCmdDrawIndexed(commandBuffer,
-				                 static_cast<uint32_t>(MCar4.indices.size()), 1, 0, 0, 0);
-				break;
-			case 4:
-				PCar.bind(commandBuffer);
-				DSGubo.bind(commandBuffer, PCar, 0, currentImage);
-				MCar5.bind(commandBuffer);
-				DSCar5.bind(commandBuffer, PCar, 1, currentImage);
-				vkCmdDrawIndexed(commandBuffer,
-				                 static_cast<uint32_t>(MCar5.indices.size()), 1, 0, 0, 0);
-				break;
-		}
+        switch(currCarModel) {
+            case 0:
+                PCar1.bind(commandBuffer);
+                DSGubo.bind(commandBuffer, PCar1, 0, currentImage);
+                MCar1.bind(commandBuffer);
+                DSCar1.bind(commandBuffer, PCar1, 1, currentImage);
+                vkCmdDrawIndexed(commandBuffer,
+                                 static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
+                break;
+            case 1:
+                PCar2.bind(commandBuffer);
+                DSGubo.bind(commandBuffer, PCar2, 0, currentImage);
+                MCar2.bind(commandBuffer);
+                DSCar2.bind(commandBuffer, PCar2, 1, currentImage);
+                vkCmdDrawIndexed(commandBuffer,
+                                 static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);
+                break;
+            case 2:
+                PCar.bind(commandBuffer);
+                DSGubo.bind(commandBuffer, PCar, 0, currentImage);
+                MCar3.bind(commandBuffer);
+                DSCar3.bind(commandBuffer, PCar, 1, currentImage);
+                vkCmdDrawIndexed(commandBuffer,
+                                 static_cast<uint32_t>(MCar3.indices.size()), 1, 0, 0, 0);
+                break;
+            case 3:
+                PCar.bind(commandBuffer);
+                DSGubo.bind(commandBuffer, PCar, 0, currentImage);
+                MCar4.bind(commandBuffer);
+                DSCar4.bind(commandBuffer, PCar, 1, currentImage);
+                vkCmdDrawIndexed(commandBuffer,
+                                 static_cast<uint32_t>(MCar4.indices.size()), 1, 0, 0, 0);
+                break;
+            case 4:
+                PCar.bind(commandBuffer);
+                DSGubo.bind(commandBuffer, PCar, 0, currentImage);
+                MCar5.bind(commandBuffer);
+                DSCar5.bind(commandBuffer, PCar, 1, currentImage);
+                vkCmdDrawIndexed(commandBuffer,
+                                 static_cast<uint32_t>(MCar5.indices.size()), 1, 0, 0, 0);
+                break;
+        }
 
-		/*MCar1.bind(commandBuffer);
-		DSCar1.bind(commandBuffer, PCar, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);*/
+        /*MCar1.bind(commandBuffer);
+        DSCar1.bind(commandBuffer, PCar, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+            static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);*/
 
-		/*MCar2.bind(commandBuffer);
-		DSCar2.bind(commandBuffer, PCar, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);*/
+        /*MCar2.bind(commandBuffer);
+        DSCar2.bind(commandBuffer, PCar, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+            static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);*/
 
-		/*MCar3.bind(commandBuffer);
-		DSCar3.bind(commandBuffer, PCar, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCar3.indices.size()), 1, 0, 0, 0);*/
+        /*MCar3.bind(commandBuffer);
+        DSCar3.bind(commandBuffer, PCar, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+            static_cast<uint32_t>(MCar3.indices.size()), 1, 0, 0, 0);*/
 
-		/*MCar4.bind(commandBuffer);
-		DSCar4.bind(commandBuffer, PCar, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCar4.indices.size()), 1, 0, 0, 0);*/
+        /*MCar4.bind(commandBuffer);
+        DSCar4.bind(commandBuffer, PCar, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+            static_cast<uint32_t>(MCar4.indices.size()), 1, 0, 0, 0);*/
 
-		/*MCar5.bind(commandBuffer);
-		DSCar5.bind(commandBuffer, PCar, 1, currentImage);
-		vkCmdDrawIndexed(commandBuffer,
-			static_cast<uint32_t>(MCar5.indices.size()), 1, 0, 0, 0);*/
-	}
+        /*MCar5.bind(commandBuffer);
+        DSCar5.bind(commandBuffer, PCar, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+            static_cast<uint32_t>(MCar5.indices.size()), 1, 0, 0, 0);*/
+    }
 
     void GameLogic() {
         // Parameters
@@ -615,37 +623,37 @@ class Dealership : public BaseProject {
         ViewPrj = Prj * View;
     }
 
-	// Here is where you update the uniforms.
-	// Very likely this will be where you will be writing the logic of your application.
-	void updateUniformBuffer(uint32_t currentImage) override {
-		// Standard procedure to quit when the ESC key is pressed
-		if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
-			glfwSetWindowShouldClose(window, GL_TRUE);
-		}
+    // Here is where you update the uniforms.
+    // Very likely this will be where you will be writing the logic of your application.
+    void updateUniformBuffer(uint32_t currentImage) override {
+        // Standard procedure to quit when the ESC key is pressed
+        if(glfwGetKey(window, GLFW_KEY_ESCAPE)) {
+            glfwSetWindowShouldClose(window, GL_TRUE);
+        }
 
-		// Lighting parameters
-		const auto lightStep = 0.2f;
-		const auto colorStep = 10.0f;
-		static auto colorX = 1.0f;
-		static auto colorY = 1.0f;
-		static auto colorZ = 1.0f;
-		static float* currentColorPtr = &colorX;
-		static auto lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
-		static auto lightPosOld = lightPos;
-		static auto colorOld = glm::vec3(colorX, colorY, colorZ);
+        // Lighting parameters
+        const auto lightStep = 0.2f;
+        const auto colorStep = 10.0f;
+        static auto colorX = 1.0f;
+        static auto colorY = 1.0f;
+        static auto colorZ = 1.0f;
+        static float* currentColorPtr = &colorX;
+        static auto lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
+        static auto lightPosOld = lightPos;
+        static auto colorOld = glm::vec3(colorX, colorY, colorZ);
 
-		// Key press parameters
+        // Key press parameters
         static bool debounce = false;
         static int curDebounce = 0;
-		static bool showNormal = false;
-		static bool showUV = false;
+        static bool showNormal = false;
+        static bool showUV = false;
 
         // Switch currCarModel on specific key press
         if(glfwGetKey(window, GLFW_KEY_N)) {
             if(!debounce) {
                 debounce = true;
                 curDebounce = GLFW_KEY_N;
-				currCarModel = (currCarModel+1 == NumCars) ? 0 : currCarModel+1;
+                currCarModel = (currCarModel+1 == NumCars) ? 0 : currCarModel+1;
                 std::cout << "Scene : " << currCarModel << "\n";
                 RebuildPipeline();
             }
@@ -659,7 +667,7 @@ class Dealership : public BaseProject {
             if(!debounce) {
                 debounce = true;
                 curDebounce = GLFW_KEY_P;
-	            currCarModel = (currCarModel-1 < 0) ? NumCars-1 : currCarModel-1;
+                currCarModel = (currCarModel-1 < 0) ? NumCars-1 : currCarModel-1;
                 std::cout << "Scene : " << currCarModel << "\n";
                 RebuildPipeline();
             }
@@ -685,246 +693,246 @@ class Dealership : public BaseProject {
             }
         }
 
-		// Hold ALT to change the light color, or don't hold to change light position
-		if(glfwGetKey(window, GLFW_KEY_LEFT_ALT)) {
-			// While holding ALT, we can modify the light color
-			if (glfwGetKey(window, GLFW_KEY_J)){
-				if (!debounce) {
-					debounce = true;
-					curDebounce = GLFW_KEY_J;
-					if (currentColorPtr == &colorX) {
-						currentColorPtr = &colorZ;
-						std::cout << "Switched to Z." << std::endl;
-					}
-					else if (currentColorPtr == &colorY) {
-						currentColorPtr = &colorX;
-						std::cout << "Switched to X." << std::endl;
-					}
-					else {
-						currentColorPtr = &colorY;
-						std::cout << "Switched to Y." << std::endl;
-					}
-				}
-			} else {
-				if((curDebounce == GLFW_KEY_J) && debounce) {
-					debounce = false;
-					curDebounce = 0;
-				}
-			}
-			if (glfwGetKey(window, GLFW_KEY_L)){
-				if (!debounce) {
-					debounce = true;
-					curDebounce = GLFW_KEY_L;
-					if (currentColorPtr == &colorX) {
-						currentColorPtr = &colorY;
-						std::cout << "Switched to Y." << std::endl;
-					}
-					else if (currentColorPtr == &colorY) {
-						currentColorPtr = &colorZ;
-						std::cout << "Switched to Z." << std::endl;
-					}
-					else {
-						currentColorPtr = &colorX;
-						std::cout << "Switched to X." << std::endl;
-					}
-				}
-			} else {
-				if((curDebounce == GLFW_KEY_L) && debounce) {
-					debounce = false;
-					curDebounce = 0;
-				}
-			}
-			if (glfwGetKey(window, GLFW_KEY_I)) {
-				if (!debounce) {
-					debounce = true;
-					curDebounce = GLFW_KEY_I;
-					*currentColorPtr += colorStep;
-					if (*currentColorPtr > 255.0f) {
-						*currentColorPtr = 255.0f;
-						std::cout << "Maximum reached." << std::endl;
-					}
-				}
-			} else {
-				if((curDebounce == GLFW_KEY_I) && debounce) {
-					debounce = false;
-					curDebounce = 0;
-				}
-			}
-			if (glfwGetKey(window, GLFW_KEY_K)) {
-				if (!debounce) {
-					debounce = true;
-					curDebounce = GLFW_KEY_K;
-					*currentColorPtr -= colorStep;
-					if (*currentColorPtr < 1.0f) {
-						*currentColorPtr = 1.0f;
-						std::cout << "Minimum reached." << std::endl;
-					}
-				}
-			} else {
-				if((curDebounce == GLFW_KEY_K) && debounce) {
-					debounce = false;
-					curDebounce = 0;
-				}
-			}
+        // Hold ALT to change the light color, or don't hold to change light position
+        if(glfwGetKey(window, GLFW_KEY_LEFT_ALT)) {
+            // While holding ALT, we can modify the light color
+            if (glfwGetKey(window, GLFW_KEY_J)){
+                if (!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_J;
+                    if (currentColorPtr == &colorX) {
+                        currentColorPtr = &colorZ;
+                        std::cout << "Switched to Z." << std::endl;
+                    }
+                    else if (currentColorPtr == &colorY) {
+                        currentColorPtr = &colorX;
+                        std::cout << "Switched to X." << std::endl;
+                    }
+                    else {
+                        currentColorPtr = &colorY;
+                        std::cout << "Switched to Y." << std::endl;
+                    }
+                }
+            } else {
+                if((curDebounce == GLFW_KEY_J) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
+            if (glfwGetKey(window, GLFW_KEY_L)){
+                if (!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_L;
+                    if (currentColorPtr == &colorX) {
+                        currentColorPtr = &colorY;
+                        std::cout << "Switched to Y." << std::endl;
+                    }
+                    else if (currentColorPtr == &colorY) {
+                        currentColorPtr = &colorZ;
+                        std::cout << "Switched to Z." << std::endl;
+                    }
+                    else {
+                        currentColorPtr = &colorX;
+                        std::cout << "Switched to X." << std::endl;
+                    }
+                }
+            } else {
+                if((curDebounce == GLFW_KEY_L) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
+            if (glfwGetKey(window, GLFW_KEY_I)) {
+                if (!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_I;
+                    *currentColorPtr += colorStep;
+                    if (*currentColorPtr > 255.0f) {
+                        *currentColorPtr = 255.0f;
+                        std::cout << "Maximum reached." << std::endl;
+                    }
+                }
+            } else {
+                if((curDebounce == GLFW_KEY_I) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
+            if (glfwGetKey(window, GLFW_KEY_K)) {
+                if (!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_K;
+                    *currentColorPtr -= colorStep;
+                    if (*currentColorPtr < 1.0f) {
+                        *currentColorPtr = 1.0f;
+                        std::cout << "Minimum reached." << std::endl;
+                    }
+                }
+            } else {
+                if((curDebounce == GLFW_KEY_K) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
 
-			// Press R to reset the light's color
-			if(glfwGetKey(window, GLFW_KEY_R)) {
-				if(!debounce) {
-					debounce = true;
-					curDebounce = GLFW_KEY_R;
-					colorX = 1.0f;
-					colorY = 1.0f;
-					colorZ = 1.0f;
-				}
-			} else {
-				if((curDebounce == GLFW_KEY_R) && debounce) {
-					debounce = false;
-					curDebounce = 0;
-				}
-			}
-		} else {
-			// If not holding ALT, modify the light's position
-			if (glfwGetKey(window, GLFW_KEY_J)) {
-				if (!debounce) {
-					debounce = true;
-					curDebounce = GLFW_KEY_J;
-					lightPos.x -= lightStep;
-				}
-			} else {
-				if ((curDebounce == GLFW_KEY_J) && debounce) {
-					debounce = false;
-					curDebounce = 0;
-				}
-			}
-			if (glfwGetKey(window, GLFW_KEY_L)) {
-				if (!debounce) {
-					debounce = true;
-					curDebounce = GLFW_KEY_L;
-					lightPos.x += lightStep;
-				}
-			} else {
-				if ((curDebounce == GLFW_KEY_L) && debounce) {
-					debounce = false;
-					curDebounce = 0;
-				}
-			}
-			if (glfwGetKey(window, GLFW_KEY_I)) {
-				if (!debounce) {
-					debounce = true;
-					curDebounce = GLFW_KEY_I;
-					lightPos.z -= lightStep;
-				}
-			} else {
-				if ((curDebounce == GLFW_KEY_I) && debounce) {
-					debounce = false;
-					curDebounce = 0;
-				}
-			}
-			if (glfwGetKey(window, GLFW_KEY_K)) {
-				if (!debounce) {
-					debounce = true;
-					curDebounce = GLFW_KEY_K;
-					lightPos.z += lightStep;
-				}
-			} else {
-				if ((curDebounce == GLFW_KEY_K) && debounce) {
-					debounce = false;
-					curDebounce = 0;
-				}
-			}
+            // Press R to reset the light's color
+            if(glfwGetKey(window, GLFW_KEY_R)) {
+                if(!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_R;
+                    colorX = 1.0f;
+                    colorY = 1.0f;
+                    colorZ = 1.0f;
+                }
+            } else {
+                if((curDebounce == GLFW_KEY_R) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
+        } else {
+            // If not holding ALT, modify the light's position
+            if (glfwGetKey(window, GLFW_KEY_J)) {
+                if (!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_J;
+                    lightPos.x -= lightStep;
+                }
+            } else {
+                if ((curDebounce == GLFW_KEY_J) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
+            if (glfwGetKey(window, GLFW_KEY_L)) {
+                if (!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_L;
+                    lightPos.x += lightStep;
+                }
+            } else {
+                if ((curDebounce == GLFW_KEY_L) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
+            if (glfwGetKey(window, GLFW_KEY_I)) {
+                if (!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_I;
+                    lightPos.z -= lightStep;
+                }
+            } else {
+                if ((curDebounce == GLFW_KEY_I) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
+            if (glfwGetKey(window, GLFW_KEY_K)) {
+                if (!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_K;
+                    lightPos.z += lightStep;
+                }
+            } else {
+                if ((curDebounce == GLFW_KEY_K) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
 
-			// Press R to reset the light's position
-			if(glfwGetKey(window, GLFW_KEY_R)) {
-				if(!debounce) {
-					debounce = true;
-					curDebounce = GLFW_KEY_R;
-					lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
-				}
-			} else {
-				if((curDebounce == GLFW_KEY_R) && debounce) {
-					debounce = false;
-					curDebounce = 0;
-				}
-			}
-		}
+            // Press R to reset the light's position
+            if(glfwGetKey(window, GLFW_KEY_R)) {
+                if(!debounce) {
+                    debounce = true;
+                    curDebounce = GLFW_KEY_R;
+                    lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
+                }
+            } else {
+                if((curDebounce == GLFW_KEY_R) && debounce) {
+                    debounce = false;
+                    curDebounce = 0;
+                }
+            }
+        }
 
-		// Light position limits
-		if (lightPos.x < 0.2f) lightPos.x = 0.2f;
-		else if (lightPos.x > 11.8f) lightPos.x = 11.8f;
-		if (lightPos.z < 0.2f) lightPos.z = 0.2f;
-		else if (lightPos.z > 11.8f) lightPos.z = 11.8f;
+        // Light position limits
+        if (lightPos.x < 0.2f) lightPos.x = 0.2f;
+        else if (lightPos.x > 11.8f) lightPos.x = 11.8f;
+        if (lightPos.z < 0.2f) lightPos.z = 0.2f;
+        else if (lightPos.z > 11.8f) lightPos.z = 11.8f;
 
-		if (lightPosOld != lightPos) std::cout << "lightPos = (" << lightPos.x << ", " << lightPos.y << ", " << lightPos.z << ")" << std::endl;
-		lightPosOld = lightPos;
+        if (lightPosOld != lightPos) std::cout << "lightPos = (" << lightPos.x << ", " << lightPos.y << ", " << lightPos.z << ")" << std::endl;
+        lightPosOld = lightPos;
 
-		if (colorOld.x != colorX || colorOld.y != colorY || colorOld.z != colorZ) std::cout << "Color = (" << colorX << ", " << colorY << ", " << colorZ << ")" << std::endl;
-		colorOld = glm::vec3(colorX, colorY, colorZ);
+        if (colorOld.x != colorX || colorOld.y != colorY || colorOld.z != colorZ) std::cout << "Color = (" << colorX << ", " << colorY << ", " << colorZ << ")" << std::endl;
+        colorOld = glm::vec3(colorX, colorY, colorZ);
 
         GameLogic();
 
         //TODO: remove global uniform buffer object
-		//global room illumination
+        //global room illumination
         gubo.selector = glm::vec3(showNormal || showUV ? 0 : 1, showNormal ? 1 : 0, showUV ? 1 : 0);
-		//gubo.lightPos = lightPos;
-		gubo.lightDir = glm::normalize(glm::vec3(0, 1, 0));
-		gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-		gubo.eyePos = cameraPos;
+        //gubo.lightPos = lightPos;
+        gubo.lightDir = glm::normalize(glm::vec3(0, 1, 0));
+        gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
+        gubo.eyePos = cameraPos;
 
-		// Car Point light
-		gub.DlightPos = lightPos;
-		gub.DlightDir = glm::normalize(lightPos - glm::vec3(6.0f, 1.0f, 6.0f));
-		gub.DlightColor = glm::vec4(colorX, colorY, colorZ, 1.0f);
-		gub.AmbLightColor = glm::vec3(0.1f);
-		gub.eyePos = cameraPos;
+        // Car Point light
+        gub.DlightPos = lightPos;
+        gub.DlightDir = glm::normalize(lightPos - glm::vec3(6.0f, 1.0f, 6.0f));
+        gub.DlightColor = glm::vec4(colorX, colorY, colorZ, 1.0f);
+        gub.AmbLightColor = glm::vec3(0.1f);
+        gub.eyePos = cameraPos;
 
-		/*
-		glm::mat4 World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
-									  glm::vec3(6.0f, 0.1f, 6.0f)),
-								      glm::vec3(0.012, 0.012, 0.012)),ShowRot,
-		                              glm::vec3(0,1,0));;
-		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		uboCar.mvpMat = ViewPrj * World;
-		uboCar.mMat = World;
-		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar1.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+        /*
+        glm::mat4 World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
+                                      glm::vec3(6.0f, 0.1f, 6.0f)),
+                                      glm::vec3(0.012, 0.012, 0.012)),ShowRot,
+                                      glm::vec3(0,1,0));;
+        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+        uboCar.mvpMat = ViewPrj * World;
+        uboCar.mMat = World;
+        uboCar.nMat = glm::inverse(glm::transpose(World));
+        DSCar1.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
 
-		auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
-							    glm::vec3(6.0f, 0.1f, 6.0f)),
-								glm::vec3(0.0115, 0.0115, 0.0115)), ShowRot,
-	                            glm::vec3(0,1,0));
-		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		uboCar.mvpMat = ViewPrj * World;
-		uboCar.mMat = World;
-		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar2.map(currentImage, &uboCar, sizeof(uboCar), 0);
+        auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
+                                glm::vec3(6.0f, 0.1f, 6.0f)),
+                                glm::vec3(0.0115, 0.0115, 0.0115)), ShowRot,
+                                glm::vec3(0,1,0));
+        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+        uboCar.mvpMat = ViewPrj * World;
+        uboCar.mMat = World;
+        uboCar.nMat = glm::inverse(glm::transpose(World));
+        DSCar2.map(currentImage, &uboCar, sizeof(uboCar), 0);
 
-		auto World = glm::rotate(glm::scale(glm::rotate(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)), glm::radians(90.0f), glm::vec3(-1, 0, 0)), glm::radians(90.0f), glm::vec3(0, 0, 1)), glm::vec3(0.08, 0.08, 0.08)),
-				ShowRot, glm::vec3(0,0,1));
-		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		uboCar.mvpMat = ViewPrj * World;
-		uboCar.mMat = World;
-		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar3.map(currentImage, &uboCar, sizeof(uboCar), 0);
+        auto World = glm::rotate(glm::scale(glm::rotate(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)), glm::radians(90.0f), glm::vec3(-1, 0, 0)), glm::radians(90.0f), glm::vec3(0, 0, 1)), glm::vec3(0.08, 0.08, 0.08)),
+                ShowRot, glm::vec3(0,0,1));
+        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+        uboCar.mvpMat = ViewPrj * World;
+        uboCar.mMat = World;
+        uboCar.nMat = glm::inverse(glm::transpose(World));
+        DSCar3.map(currentImage, &uboCar, sizeof(uboCar), 0);
 
-		auto World = glm::rotate(glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.2f, 6.0f)), glm::radians(90.0f), glm::vec3(0, 1, 0)), glm::vec3(0.035, 0.035, 0.035)),
-								 ShowRot, glm::vec3(0,1,0));
-		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		uboCar.mvpMat = ViewPrj * World;
-		uboCar.mMat = World;
-		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar4.map(currentImage, &uboCar, sizeof(uboCar), 0);
+        auto World = glm::rotate(glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.2f, 6.0f)), glm::radians(90.0f), glm::vec3(0, 1, 0)), glm::vec3(0.035, 0.035, 0.035)),
+                                 ShowRot, glm::vec3(0,1,0));
+        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+        uboCar.mvpMat = ViewPrj * World;
+        uboCar.mMat = World;
+        uboCar.nMat = glm::inverse(glm::transpose(World));
+        DSCar4.map(currentImage, &uboCar, sizeof(uboCar), 0);
 
-		auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)), glm::vec3(1.3, 1.3, 1.3)),
-								 ShowRot, glm::vec3(0,1,0));
-		uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		uboCar.mvpMat = ViewPrj * World;
-		uboCar.mMat = World;
-		uboCar.nMat = glm::inverse(glm::transpose(World));
-		DSCar5.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
+        auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)), glm::vec3(1.3, 1.3, 1.3)),
+                                 ShowRot, glm::vec3(0,1,0));
+        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+        uboCar.mvpMat = ViewPrj * World;
+        uboCar.mMat = World;
+        uboCar.nMat = glm::inverse(glm::transpose(World));
+        DSCar5.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
 
-		uboEnv.mMat = glm::scale(glm::mat4(1), glm::vec3(3));
-		uboEnv.mvpMat = ViewPrj * uboEnv.mMat;
-		uboEnv.nMat = glm::inverse(glm::transpose(uboEnv.mMat));
+        uboEnv.mMat = glm::scale(glm::mat4(1), glm::vec3(3));
+        uboEnv.mvpMat = ViewPrj * uboEnv.mMat;
+        uboEnv.nMat = glm::inverse(glm::transpose(uboEnv.mMat));
 
         uboShow.mMat = glm::rotate(glm::translate(glm::mat4(1.0f),
                                    glm::vec3(6.0f, 0.0f, 6.0f)),ShowRot,
@@ -932,99 +940,99 @@ class Dealership : public BaseProject {
         uboShow.mvpMat = ViewPrj * uboShow.mMat;
         uboShow.nMat = glm::inverse(glm::transpose(uboShow.mMat));
 
-		uboDoor.mMat = glm::rotate(glm::rotate(glm::scale(
-			glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.65f, 12.0f)),
-			glm::vec3(1.5)), glm::radians(-90.0f), glm::vec3(1, 0, 0)),
-			glm::radians(-90.0f), glm::vec3(0, 0, 1));
-		uboDoor.mvpMat = ViewPrj * uboDoor.mMat;
-		uboDoor.nMat = glm::inverse(glm::transpose(uboDoor.mMat));
+        uboDoor.mMat = glm::rotate(glm::rotate(glm::scale(
+            glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.65f, 12.0f)),
+            glm::vec3(1.5)), glm::radians(-90.0f), glm::vec3(1, 0, 0)),
+            glm::radians(-90.0f), glm::vec3(0, 0, 1));
+        uboDoor.mvpMat = ViewPrj * uboDoor.mMat;
+        uboDoor.nMat = glm::inverse(glm::transpose(uboDoor.mMat));
 
-		uboSphere.mMat = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2));
-		uboSphere.mvpMat = ViewPrj * uboSphere.mMat;
-		uboSphere.nMat = glm::inverse(glm::transpose(uboSphere.mMat));
+        uboSphere.mMat = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2));
+        uboSphere.mvpMat = ViewPrj * uboSphere.mMat;
+        uboSphere.nMat = glm::inverse(glm::transpose(uboSphere.mMat));
 
         // Mapping of the room
-		DSEnv.map((int)currentImage, &uboEnv, sizeof(uboEnv), 0);
+        DSEnv.map((int)currentImage, &uboEnv, sizeof(uboEnv), 0);
         DSEnv.map((int)currentImage, &gubo, sizeof(gubo), 1);
         // Mapping of the Showcase platform
         DSShow.map((int)currentImage, &uboShow, sizeof(uboShow), 0);
         DSShow.map((int)currentImage, &gubo, sizeof(gubo), 1);
-		// Mapping of the Door
-		DSDoor.map((int)currentImage, &uboDoor, sizeof(uboDoor), 0);
-		DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
-		// Mapping of the sphere
-		DSSphere.map((int)currentImage, &uboSphere, sizeof(uboSphere), 0);
-		DSSphere.map((int)currentImage, &gubo, sizeof(gubo), 1);
+        // Mapping of the Door
+        DSDoor.map((int)currentImage, &uboDoor, sizeof(uboDoor), 0);
+        DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
+        // Mapping of the sphere
+        DSSphere.map((int)currentImage, &uboSphere, sizeof(uboSphere), 0);
+        DSSphere.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
 
-		DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
+        DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
 
         switch(currCarModel) {
             case 0:
-		        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		        uboCar.mMat = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
+                uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+                uboCar.mMat = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
                                           glm::vec3(6.0f, 0.1f, 6.0f)),
-									      glm::vec3(0.012, 0.012, 0.012)),ShowRot,
-		                                  glm::vec3(0,1,0));
-		        uboCar.mvpMat = ViewPrj * uboCar.mMat;
-		        uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-	            DSCar1.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
-		        break;
+                                          glm::vec3(0.012, 0.012, 0.012)),ShowRot,
+                                          glm::vec3(0,1,0));
+                uboCar.mvpMat = ViewPrj * uboCar.mMat;
+                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+                DSCar1.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+                break;
             case 1:
-		        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		        uboCar.mMat = glm::rotate(glm::scale(
-						glm::translate(glm::mat4(1.0f),glm::vec3(6.0f, 0.1f, 6.0f)),
+                uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+                uboCar.mMat = glm::rotate(glm::scale(
+                        glm::translate(glm::mat4(1.0f),glm::vec3(6.0f, 0.1f, 6.0f)),
                          glm::vec3(0.0115, 0.0115, 0.0115)), ShowRot, glm::vec3(0,1,0));
-		        uboCar.mvpMat = ViewPrj * uboCar.mMat;
-		        uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-	            DSCar2.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
-		        break;
-	        case 2:
-		        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		        uboCar.mMat = glm::rotate(glm::scale(
-						glm::rotate(
-						glm::rotate(
-						glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)),
-					  glm::radians(90.0f), glm::vec3(-1, 0, 0)),
-					  glm::radians(90.0f), glm::vec3(0, 0, 1)),
-						 glm::vec3(0.08, 0.08, 0.08)),
+                uboCar.mvpMat = ViewPrj * uboCar.mMat;
+                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+                DSCar2.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+                break;
+            case 2:
+                uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+                uboCar.mMat = glm::rotate(glm::scale(
+                        glm::rotate(
+                        glm::rotate(
+                        glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)),
+                      glm::radians(90.0f), glm::vec3(-1, 0, 0)),
+                      glm::radians(90.0f), glm::vec3(0, 0, 1)),
+                         glm::vec3(0.08, 0.08, 0.08)),
                       ShowRot, glm::vec3(0,0,1));
-		        uboCar.mvpMat = ViewPrj * uboCar.mMat;
-		        uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-		        DSCar3.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
-		        break;
-	        case 3:
-		        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		        uboCar.mMat = glm::rotate(
-						glm::scale(
-						glm::rotate(
-						glm::translate(
-						glm::mat4(1.0f),
-						 glm::vec3(6.0f, 1.2f, 6.0f)),
-					  glm::radians(90.0f),
-						 glm::vec3(0, 1, 0)),
-						 glm::vec3(0.035, 0.035, 0.035)),
+                uboCar.mvpMat = ViewPrj * uboCar.mMat;
+                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+                DSCar3.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+                break;
+            case 3:
+                uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+                uboCar.mMat = glm::rotate(
+                        glm::scale(
+                        glm::rotate(
+                        glm::translate(
+                        glm::mat4(1.0f),
+                         glm::vec3(6.0f, 1.2f, 6.0f)),
+                      glm::radians(90.0f),
+                         glm::vec3(0, 1, 0)),
+                         glm::vec3(0.035, 0.035, 0.035)),
                       ShowRot, glm::vec3(0,1,0));
-		        uboCar.mvpMat = ViewPrj * uboCar.mMat;
-		        uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-		        DSCar4.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
-		        break;
-	        case 4:
-		        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-		        uboCar.mMat = glm::rotate(glm::scale(
-						  glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)),
-					       glm::vec3(1.3, 1.3, 1.3)),
+                uboCar.mvpMat = ViewPrj * uboCar.mMat;
+                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+                DSCar4.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+                break;
+            case 4:
+                uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
+                uboCar.mMat = glm::rotate(glm::scale(
+                          glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)),
+                           glm::vec3(1.3, 1.3, 1.3)),
                         ShowRot, glm::vec3(0,1,0));
-		        uboCar.mvpMat = ViewPrj * uboCar.mMat;
-		        uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-		        DSCar5.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
-		        break;
+                uboCar.mvpMat = ViewPrj * uboCar.mMat;
+                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
+                DSCar5.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+                break;
         }
-	}
+    }
 
-	static void createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
+    static void createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
     static void createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
-	static void createSphereMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
+    static void createSphereMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
 };
 
 #include "Meshes.hpp"
