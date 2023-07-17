@@ -211,7 +211,7 @@ class Dealership : public BaseProject {
 		//PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", { &DSLGubo, &DSLCar });
 
 		//PLight.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnPointLightFrag.spv", {&DSLEnv});
-		PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLEnv});
+		PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnNormMap2.spv", {&DSLEnv});
 		PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
         /*PShow.init(this, &VShow, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLShow});
