@@ -28,27 +28,6 @@ struct GlobalUniformBlock {
     alignas(16) glm::vec3 eyePos;
 };
 
-struct UniformBufferObject {
-    alignas(16) glm::mat4 mvpMat;
-    alignas(16) glm::mat4 mMat;
-    alignas(16) glm::mat4 nMat;
-};
-
-//TODO: riscrivere lo shader rimuovendo la necessità per il selector
-struct GlobalUniformBufferObject {
-    alignas(16) glm::vec3 selector;
-    alignas(16) glm::vec3 lightDir;
-    alignas(16) glm::vec4 lightColor;
-    alignas(16) glm::vec3 eyePos;
-};
-
-/*struct GlobalUniformBufferObject {
-    alignas(16) glm::vec3 lightPos;
-    alignas(16) glm::vec3 lightDir;
-    alignas(16) glm::vec4 lightColor;
-    alignas(16) glm::vec3 eyePos;
-};*/
-
 struct VertexMesh {
     alignas(16) glm::vec3 pos;
     alignas(16) glm::vec3 norm;
@@ -63,11 +42,11 @@ class Dealership : public BaseProject {
     float Ar;
 
     // Descriptor Layouts ["classes" of what will be passed to the shaders]
-    DescriptorSetLayout DSLCar, DSLGubo, DSLEnv;
-    DescriptorSetLayout DSLCar1, DSLCar2;// , DSLCar;
+    DescriptorSetLayout DSLGubo, DSLEnv;
+    DescriptorSetLayout DSLCar, DSLCar1, DSLCar2;
 
     // Vertex formats
-    VertexDescriptor VMesh/*, VShow*/;
+    VertexDescriptor VMesh;
 
     // Pipelines [Shader couples]
     Pipeline PMesh, PCar1, PCar2, PCar;
@@ -76,18 +55,16 @@ class Dealership : public BaseProject {
     DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
 
     // Models, textures and Descriptors (values assigned to the uniforms)
-    Model<VertexMesh> MEnv, MShow, MCar1, MCar2, MCar3, MCar4, MCar5, MDoor;
-    Model<VertexMesh> MSphere;
-    //TODO: define car models array
+    Model<VertexMesh> MEnv, MShow, MSphere, MDoor;
+    Model<VertexMesh> MCar1, MCar2, MCar3, MCar4, MCar5;
 
     // C++ storage for uniform variables
-    MeshUniformBlock uboCar;
-    UniformBufferObject uboEnv, uboShow, uboDoor, uboSphere;
+    MeshUniformBlock mubCar, mubEnv;
 
     GlobalUniformBlock gub;
-    GlobalUniformBufferObject gubo;
 
-    Texture TEnv, TEnv_1, TEnv_2, TShow, TDoor;
+    Texture TEnv, TEnv_1, TEnv_2;
+    Texture TDoor, TDoor_1, TDoor_2;
     Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
     Texture TCar2_0, TCar2_1, TCar2_2, TCar2_3;
     Texture TCar3_0, TCar3_1, TCar3_2, TCar3_3;
@@ -96,7 +73,7 @@ class Dealership : public BaseProject {
 
     // Other application parameters
     int currCarModel = 0;
-    int NumCars = 5; //TODO: set to car models array length
+    int NumCars = 5;
     glm::mat4 ViewPrj;
     glm::vec3 Pos = glm::vec3(6.0f,1.0f,10.0f); // Initial spawn location
     glm::vec3 PrevPos = Pos;
@@ -157,28 +134,19 @@ class Dealership : public BaseProject {
                     {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
                     {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                     {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                });/*
-        DSLCar.init(this, {
+                });
+
+        DSLEnv.init(this, {
                     {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
                     {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                     {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                     {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                    {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-                });*/
-
-        DSLEnv.init(this, {
-                    {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_VERTEX_BIT},
-                    {1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-                    {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                    {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-                    {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                 });
 
         DSLGubo.init(this, {
                     {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
             });
 
-        
 
         // Vertex descriptors
         VMesh.init(this, {
@@ -192,19 +160,6 @@ class Dealership : public BaseProject {
                          sizeof(glm::vec2), UV}
                 });
 
-        /*VShow.init(this, {
-                {0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
-        }, {
-                   {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
-                           sizeof(glm::vec3), POSITION},
-                   {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
-                           sizeof(glm::vec3), NORMAL},
-                   {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
-                           sizeof(glm::vec2), UV}
-               });*/
-
-        
-
         // Pipelines [Shader couples]
         PCar1.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1ShaderFrag.spv", {&DSLGubo, &DSLCar1});
         PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
@@ -212,12 +167,8 @@ class Dealership : public BaseProject {
                                                         //shaders/BlinnNormMapFrag.spv -- MeshFrag.spv*/
         //PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", { &DSLGubo, &DSLCar });
 
-        //PLight.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnPointLightFrag.spv", {&DSLEnv});
-        PMesh.init(this, &VMesh, "shaders/BlinnVert.spv", "shaders/BlinnNormMap2.spv", {&DSLEnv});
+        PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMap2.spv", {&DSLGubo, &DSLEnv});
         PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
-
-        /*PShow.init(this, &VShow, "shaders/BlinnVert.spv", "shaders/BlinnFrag.spv", {&DSLShow});
-        PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);*/
 
         /* Models */
         createEnvMesh(MEnv.vertices, MEnv.indices);
@@ -236,6 +187,7 @@ class Dealership : public BaseProject {
         MCar5.init(this, &VMesh, "Models/Car5.obj", OBJ);
 
         MDoor.init(this, &VMesh, "models/door/door.gltf", GLTF);
+
         /* Textures */
         TCar1_0.init(this, "textures/Car1/cb_car_baseColor.png");
         TCar1_1.init(this, "textures/Car1/cb_car_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
@@ -244,29 +196,20 @@ class Dealership : public BaseProject {
 
         TCar2_0.init(this, "textures/Car2/baseColor.png");
         TCar2_1.init(this, "textures/Car2/roughness.png", VK_FORMAT_R8G8B8A8_UNORM);
-        /*TCar2_2.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-        TCar2_3.init(this, "textures/Car2/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
         TCar3_0.init(this, "textures/Car3/baseColor.png");
-        /*TCar3_1.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-        TCar3_2.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-        TCar3_3.init(this, "textures/Car3/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
         TCar4_0.init(this, "textures/Car4/baseColor.png");
-        /*TCar4_1.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-        TCar4_2.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-        TCar4_3.init(this, "textures/Car4/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
         TCar5_0.init(this, "textures/Car5/baseColor.png");
-        /*TCar5_1.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-        TCar5_2.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);
-        TCar5_3.init(this, "textures/Car5/baseColor.png", VK_FORMAT_R8G8B8A8_UNORM);*/
 
         TEnv.init(this, "textures/TextureRoom2.jpg");
-        TEnv_1.init(this, "textures/TextureRoom_roughness.jpg", VK_FORMAT_R8G8B8A8_UNORM);
-        TEnv_2.init(this, "textures/TextureRoom_norm.jpg", VK_FORMAT_R8G8B8A8_UNORM);
+        TEnv_1.init(this, "textures/TextureRoom_norm.jpg", VK_FORMAT_R8G8B8A8_UNORM);
+        TEnv_2.init(this, "textures/TextureRoom_roughness.jpg", VK_FORMAT_R8G8B8A8_UNORM);
 
         TDoor.init(this, "textures/door/Door_baseColor.jpeg");
+        TDoor_1.init(this, "textures/door/Door_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TDoor_2.init(this, "textures/door/Door_metallicRoughness.png", VK_FORMAT_R8G8B8A8_UNORM);
     }
     
     // Here you create your pipelines and Descriptor Sets!
@@ -279,29 +222,31 @@ class Dealership : public BaseProject {
 
         // Here you define the data set
         DSEnv.init(this, &DSLEnv, {
-                {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-                {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-                {2, TEXTURE, 0, &TEnv},
-                {3, TEXTURE, 0, &TEnv_1},
-                {4, TEXTURE, 0, &TEnv_2},
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TEnv},
+                {2, TEXTURE, 0, &TEnv_1},
+                {3, TEXTURE, 0, &TEnv_2}
         });
 
         DSShow.init(this, &DSLEnv, {
-                {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-                {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-                {2, TEXTURE, 0, &TEnv},
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TEnv},
+                {2, TEXTURE, 0, &TEnv_1},
+                {3, TEXTURE, 0, &TEnv_2}
         });
 
         DSDoor.init(this, &DSLEnv, {
-               {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-               {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-               {2, TEXTURE, 0, &TDoor},
+               {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+               {1, TEXTURE, 0, &TDoor},
+               {2, TEXTURE, 0, &TDoor_1},
+               {3, TEXTURE, 0, &TDoor_2}
             });
 
         DSSphere.init(this, &DSLEnv, {
-                {0, UNIFORM, sizeof(UniformBufferObject), nullptr},
-                {1, UNIFORM, sizeof(GlobalUniformBufferObject), nullptr},
-                {2, TEXTURE, 0, &TEnv},
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TEnv},
+                {2, TEXTURE, 0, &TEnv_1},
+                {3, TEXTURE, 0, &TEnv_2}
         });
 
         //DSCar1.init(this, &DSLCar, {
@@ -395,6 +340,8 @@ class Dealership : public BaseProject {
         //TShow.cleanup();
 
         TDoor.cleanup();
+        TDoor_1.cleanup();
+        TDoor_2.cleanup();
 
         // Cleanup models
         MCar1.cleanup();
@@ -428,24 +375,27 @@ class Dealership : public BaseProject {
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
 
         PMesh.bind(commandBuffer);
+
+        DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
+
         MEnv.bind(commandBuffer);
-        DSEnv.bind(commandBuffer, PMesh, 0, currentImage);
+        DSEnv.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                 static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
 
 
         MShow.bind(commandBuffer);
-        DSShow.bind(commandBuffer, PMesh, 0, currentImage);
+        DSShow.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MShow.indices.size()), 1, 0, 0, 0);
 
         MSphere.bind(commandBuffer);
-        DSSphere.bind(commandBuffer, PMesh, 0, currentImage);
+        DSSphere.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MSphere.indices.size()), 1, 0, 0, 0);
 
         MDoor.bind(commandBuffer);
-        DSDoor.bind(commandBuffer, PMesh, 0, currentImage);
+        DSDoor.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
             static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
 
@@ -491,31 +441,6 @@ class Dealership : public BaseProject {
                                  static_cast<uint32_t>(MCar5.indices.size()), 1, 0, 0, 0);
                 break;
         }
-
-        /*MCar1.bind(commandBuffer);
-        DSCar1.bind(commandBuffer, PCar, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-            static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);*/
-
-        /*MCar2.bind(commandBuffer);
-        DSCar2.bind(commandBuffer, PCar, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-            static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);*/
-
-        /*MCar3.bind(commandBuffer);
-        DSCar3.bind(commandBuffer, PCar, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-            static_cast<uint32_t>(MCar3.indices.size()), 1, 0, 0, 0);*/
-
-        /*MCar4.bind(commandBuffer);
-        DSCar4.bind(commandBuffer, PCar, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-            static_cast<uint32_t>(MCar4.indices.size()), 1, 0, 0, 0);*/
-
-        /*MCar5.bind(commandBuffer);
-        DSCar5.bind(commandBuffer, PCar, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-            static_cast<uint32_t>(MCar5.indices.size()), 1, 0, 0, 0);*/
     }
 
     void GameLogic() {
@@ -577,23 +502,6 @@ class Dealership : public BaseProject {
         Yaw = Yaw - ROT_SPEED * deltaT * r.y;
         /*if (Yaw != PrevYaw) std::cout << "Yaw = " << Yaw << std::endl;
         PrevYaw = Yaw;*/
-
-        /*if (Pos.x < 1.0f) {
-            if ((Yaw < 0.0f && Yaw > -HalfM_PI) || Yaw > M_PI+HalfM_PI) Yaw = 0.0f;
-            else if (Yaw > M_PI || Yaw < -HalfM_PI) Yaw = M_PI;
-        }
-        if (Pos.x > 11.0f){
-            if ((Yaw > 0.0f && Yaw < HalfM_PI) || Yaw < -M_PI-HalfM_PI) Yaw = 0.0f;
-            else if (Yaw < -M_PI || Yaw > HalfM_PI) Yaw = -M_PI;
-        }
-        if (Pos.z < 1.0f) {
-            if ((Yaw < -HalfM_PI && Yaw > -M_PI) || Yaw > M_PI) Yaw = -HalfM_PI;
-            else if (Yaw > HalfM_PI || Yaw < -M_PI) Yaw = HalfM_PI;
-        }
-        if (Pos.z > 11.0f) {
-            if (Yaw < 0.0f && Yaw > -HalfM_PI) Yaw = -HalfM_PI;
-            else if (Yaw > 0.0f && Yaw < HalfM_PI) Yaw = HalfM_PI;
-        }*/
 
         Pitch = Pitch + ROT_SPEED * deltaT * r.x;
         Pitch  =  Pitch < minPitch ? minPitch :
@@ -872,11 +780,11 @@ class Dealership : public BaseProject {
 
         //TODO: remove global uniform buffer object
         //global room illumination
-        gubo.selector = glm::vec3(showNormal || showUV ? 0 : 1, showNormal ? 1 : 0, showUV ? 1 : 0);
+        /*gubo.selector = glm::vec3(showNormal || showUV ? 0 : 1, showNormal ? 1 : 0, showUV ? 1 : 0);
         //gubo.lightPos = lightPos;
         gubo.lightDir = glm::normalize(glm::vec3(0, 1, 0));
         gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        gubo.eyePos = cameraPos;
+        gubo.eyePos = cameraPos;*/
 
         // Car Point light
         gub.DlightPos = lightPos;
@@ -885,125 +793,87 @@ class Dealership : public BaseProject {
         gub.AmbLightColor = glm::vec3(0.1f);
         gub.eyePos = cameraPos;
 
-        /*
-        glm::mat4 World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
-                                      glm::vec3(6.0f, 0.1f, 6.0f)),
-                                      glm::vec3(0.012, 0.012, 0.012)),ShowRot,
-                                      glm::vec3(0,1,0));;
-        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-        uboCar.mvpMat = ViewPrj * World;
-        uboCar.mMat = World;
-        uboCar.nMat = glm::inverse(glm::transpose(World));
-        DSCar1.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+        DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
 
-        auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
-                                glm::vec3(6.0f, 0.1f, 6.0f)),
-                                glm::vec3(0.0115, 0.0115, 0.0115)), ShowRot,
-                                glm::vec3(0,1,0));
-        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-        uboCar.mvpMat = ViewPrj * World;
-        uboCar.mMat = World;
-        uboCar.nMat = glm::inverse(glm::transpose(World));
-        DSCar2.map(currentImage, &uboCar, sizeof(uboCar), 0);
+        mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
+        mubEnv.mMat = glm::scale(glm::mat4(1), glm::vec3(3));
+        mubEnv.mvpMat = ViewPrj * mubEnv.mMat;
+        mubEnv.nMat = glm::inverse(glm::transpose(mubEnv.mMat));
 
-        auto World = glm::rotate(glm::scale(glm::rotate(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)), glm::radians(90.0f), glm::vec3(-1, 0, 0)), glm::radians(90.0f), glm::vec3(0, 0, 1)), glm::vec3(0.08, 0.08, 0.08)),
-                ShowRot, glm::vec3(0,0,1));
-        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-        uboCar.mvpMat = ViewPrj * World;
-        uboCar.mMat = World;
-        uboCar.nMat = glm::inverse(glm::transpose(World));
-        DSCar3.map(currentImage, &uboCar, sizeof(uboCar), 0);
+        // Mapping of the room
+        DSEnv.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
+        //DSEnv.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
-        auto World = glm::rotate(glm::scale(glm::rotate(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.2f, 6.0f)), glm::radians(90.0f), glm::vec3(0, 1, 0)), glm::vec3(0.035, 0.035, 0.035)),
-                                 ShowRot, glm::vec3(0,1,0));
-        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-        uboCar.mvpMat = ViewPrj * World;
-        uboCar.mMat = World;
-        uboCar.nMat = glm::inverse(glm::transpose(World));
-        DSCar4.map(currentImage, &uboCar, sizeof(uboCar), 0);
-
-        auto World = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)), glm::vec3(1.3, 1.3, 1.3)),
-                                 ShowRot, glm::vec3(0,1,0));
-        uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-        uboCar.mvpMat = ViewPrj * World;
-        uboCar.mMat = World;
-        uboCar.nMat = glm::inverse(glm::transpose(World));
-        DSCar5.map(currentImage, &uboCar, sizeof(uboCar), 0);*/
-
-        uboEnv.mMat = glm::scale(glm::mat4(1), glm::vec3(3));
-        uboEnv.mvpMat = ViewPrj * uboEnv.mMat;
-        uboEnv.nMat = glm::inverse(glm::transpose(uboEnv.mMat));
-
-        uboShow.mMat = glm::rotate(glm::translate(glm::mat4(1.0f),
+        mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
+        mubEnv.mMat = glm::rotate(glm::translate(glm::mat4(1.0f),
                                    glm::vec3(6.0f, 0.0f, 6.0f)),ShowRot,
                                    glm::vec3(0,1,0));
-        uboShow.mvpMat = ViewPrj * uboShow.mMat;
-        uboShow.nMat = glm::inverse(glm::transpose(uboShow.mMat));
+        mubEnv.mvpMat = ViewPrj * mubEnv.mMat;
+        mubEnv.nMat = glm::inverse(glm::transpose(mubEnv.mMat));
 
-        uboDoor.mMat = glm::rotate(glm::rotate(glm::scale(
+        // Mapping of the Showcase platform
+        DSShow.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
+        //DSShow.map((int)currentImage, &gubo, sizeof(gubo), 1);
+
+        mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
+        mubEnv.mMat = glm::rotate(glm::rotate(glm::scale(
             glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.65f, 12.0f)),
             glm::vec3(1.5)), glm::radians(-90.0f), glm::vec3(1, 0, 0)),
             glm::radians(-90.0f), glm::vec3(0, 0, 1));
-        uboDoor.mvpMat = ViewPrj * uboDoor.mMat;
-        uboDoor.nMat = glm::inverse(glm::transpose(uboDoor.mMat));
+        mubEnv.mvpMat = ViewPrj * mubEnv.mMat;
+        mubEnv.nMat = glm::inverse(glm::transpose(mubEnv.mMat));
 
-        uboSphere.mMat = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2));
-        uboSphere.mvpMat = ViewPrj * uboSphere.mMat;
-        uboSphere.nMat = glm::inverse(glm::transpose(uboSphere.mMat));
-
-        // Mapping of the room
-        DSEnv.map((int)currentImage, &uboEnv, sizeof(uboEnv), 0);
-        DSEnv.map((int)currentImage, &gubo, sizeof(gubo), 1);
-        // Mapping of the Showcase platform
-        DSShow.map((int)currentImage, &uboShow, sizeof(uboShow), 0);
-        DSShow.map((int)currentImage, &gubo, sizeof(gubo), 1);
         // Mapping of the Door
-        DSDoor.map((int)currentImage, &uboDoor, sizeof(uboDoor), 0);
-        DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
+        DSDoor.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
+        //DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
+
+        mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
+        mubEnv.mMat = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2));
+        mubEnv.mvpMat = ViewPrj * mubEnv.mMat;
+        mubEnv.nMat = glm::inverse(glm::transpose(mubEnv.mMat));
+
         // Mapping of the sphere
-        DSSphere.map((int)currentImage, &uboSphere, sizeof(uboSphere), 0);
-        DSSphere.map((int)currentImage, &gubo, sizeof(gubo), 1);
+        DSSphere.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
+        //DSSphere.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
-
-        DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
 
         switch(currCarModel) {
             case 0:
-                uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-                uboCar.mMat = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
-                                          glm::vec3(6.0f, 0.1f, 6.0f)),
-                                          glm::vec3(0.012, 0.012, 0.012)),ShowRot,
+                mubCar.amb = 1.0f; mubCar.gamma = 180.0f; mubCar.sColor = glm::vec3(1.0f);
+                mubCar.mMat = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
+                                                                    glm::vec3(6.0f, 0.1f, 6.0f)),
+                                                     glm::vec3(0.012, 0.012, 0.012)), ShowRot,
                                           glm::vec3(0,1,0));
-                uboCar.mvpMat = ViewPrj * uboCar.mMat;
-                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-                DSCar1.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+                mubCar.mvpMat = ViewPrj * mubCar.mMat;
+                mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
+                DSCar1.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 1:
-                uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-                uboCar.mMat = glm::rotate(glm::scale(
+                mubCar.amb = 1.0f; mubCar.gamma = 180.0f; mubCar.sColor = glm::vec3(1.0f);
+                mubCar.mMat = glm::rotate(glm::scale(
                         glm::translate(glm::mat4(1.0f),glm::vec3(6.0f, 0.1f, 6.0f)),
                          glm::vec3(0.0115, 0.0115, 0.0115)), ShowRot, glm::vec3(0,1,0));
-                uboCar.mvpMat = ViewPrj * uboCar.mMat;
-                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-                DSCar2.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+                mubCar.mvpMat = ViewPrj * mubCar.mMat;
+                mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
+                DSCar2.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 2:
-                uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-                uboCar.mMat = glm::rotate(glm::scale(
+                mubCar.amb = 1.0f; mubCar.gamma = 180.0f; mubCar.sColor = glm::vec3(1.0f);
+                mubCar.mMat = glm::rotate(glm::scale(
                         glm::rotate(
                         glm::rotate(
                         glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)),
                       glm::radians(90.0f), glm::vec3(-1, 0, 0)),
                       glm::radians(90.0f), glm::vec3(0, 0, 1)),
                          glm::vec3(0.08, 0.08, 0.08)),
-                      ShowRot, glm::vec3(0,0,1));
-                uboCar.mvpMat = ViewPrj * uboCar.mMat;
-                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-                DSCar3.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+                                          ShowRot, glm::vec3(0,0,1));
+                mubCar.mvpMat = ViewPrj * mubCar.mMat;
+                mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
+                DSCar3.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 3:
-                uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-                uboCar.mMat = glm::rotate(
+                mubCar.amb = 1.0f; mubCar.gamma = 180.0f; mubCar.sColor = glm::vec3(1.0f);
+                mubCar.mMat = glm::rotate(
                         glm::scale(
                         glm::rotate(
                         glm::translate(
@@ -1013,19 +883,19 @@ class Dealership : public BaseProject {
                          glm::vec3(0, 1, 0)),
                          glm::vec3(0.035, 0.035, 0.035)),
                       ShowRot, glm::vec3(0,1,0));
-                uboCar.mvpMat = ViewPrj * uboCar.mMat;
-                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-                DSCar4.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+                mubCar.mvpMat = ViewPrj * mubCar.mMat;
+                mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
+                DSCar4.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 4:
-                uboCar.amb = 1.0f; uboCar.gamma = 180.0f; uboCar.sColor = glm::vec3(1.0f);
-                uboCar.mMat = glm::rotate(glm::scale(
+                mubCar.amb = 1.0f; mubCar.gamma = 180.0f; mubCar.sColor = glm::vec3(1.0f);
+                mubCar.mMat = glm::rotate(glm::scale(
                           glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)),
                            glm::vec3(1.3, 1.3, 1.3)),
-                        ShowRot, glm::vec3(0,1,0));
-                uboCar.mvpMat = ViewPrj * uboCar.mMat;
-                uboCar.nMat = glm::inverse(glm::transpose(uboCar.mMat));
-                DSCar5.map((int)currentImage, &uboCar, sizeof(uboCar), 0);
+                                          ShowRot, glm::vec3(0,1,0));
+                mubCar.mvpMat = ViewPrj * mubCar.mMat;
+                mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
+                DSCar5.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
         }
     }
