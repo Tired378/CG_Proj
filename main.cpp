@@ -52,7 +52,6 @@ class Dealership : public BaseProject {
     DescriptorSetLayout DSLGubo, DSLEnv;
     DescriptorSetLayout DSLCar, DSLCar1, DSLCar2, DSLSpotlight;
 
-
     // Vertex formats
     VertexDescriptor VMesh;
 
@@ -93,7 +92,7 @@ class Dealership : public BaseProject {
     // Initial camera angles
     float Yaw = glm::radians(0.0f);
     //float PrevYaw = Yaw;
-    float Pitch = glm::radians(0.0f); //22.5f
+    float Pitch = glm::radians(0.0f);
     float Roll = glm::radians(0.0f);
     float MOVE_SPEED = 2.0f;
     // Showcase platform parameters
@@ -271,7 +270,7 @@ class Dealership : public BaseProject {
                {1, TEXTURE, 0, &TDoor},
                {2, TEXTURE, 0, &TDoor_1},
                {3, TEXTURE, 0, &TDoor_2}
-            });
+        });
 
         DSSphere.init(this, &DSLEnv, {
                 {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -291,8 +290,6 @@ class Dealership : public BaseProject {
 			});
 		}
 
-
-        //DSCar1.init(this, &DSLCar, {
         DSCar1.init(this, &DSLCar1, {
                     {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                     {1, TEXTURE, 0, &TCar1_0},
@@ -302,38 +299,34 @@ class Dealership : public BaseProject {
 
         });
 
-        //DSCar2.init(this, &DSLCar, {
         DSCar2.init(this, &DSLCar2, {
                     {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                     {1, TEXTURE, 0, &TCar2_0},
                     {2, TEXTURE, 0, &TCar2_1},
 
-            });
+        });
 
-        //DSCar3.init(this, &DSLCar, {
         DSCar3.init(this, &DSLCar, {
                     {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                     {1, TEXTURE, 0, &TCar3_0}
 
-            });
+        });
 
-        //DSCar4.init(this, &DSLCar, {
         DSCar4.init(this, &DSLCar, {
                     {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                     {1, TEXTURE, 0, &TCar4_0}
 
-            });
+        });
         
-        //DSCar5.init(this, &DSLCar, {
         DSCar5.init(this, &DSLCar, {
                     {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                     {1, TEXTURE, 0, &TCar5_0}
 
-            });
+        });
 
         DSGubo.init(this, &DSLGubo, {
                     {0, UNIFORM, sizeof(GlobalUniformBlock), nullptr}
-            });
+        });
     }
 
     // Here you destroy your pipelines and Descriptor Sets!
@@ -390,7 +383,6 @@ class Dealership : public BaseProject {
         TSpotlight_1.cleanup();
         TSpotlight_2.cleanup();
         TSpotlight_3.cleanup();
-        //TShow.cleanup();
 
         TDoor.cleanup();
         TDoor_1.cleanup();
@@ -414,7 +406,6 @@ class Dealership : public BaseProject {
         // Cleanup descriptor set layouts
         DSLCar1.cleanup();
         DSLCar2.cleanup();
-        //DSLCar.cleanup();
         DSLCar.cleanup();
         DSLGubo.cleanup();
         DSLEnv.cleanup();
