@@ -10,6 +10,12 @@
 //        vec4  : alignas(16)
 //        mat3  : alignas(16)
 //        mat4  : alignas(16)
+#define MAX_LIGHTS 4
+
+struct PointLight {
+	alignas(16) glm::vec3 lightPos;
+	alignas(16) glm::vec4 lightColor; //rgb + intensity
+};
 
 struct MeshUniformBlock {
     alignas(4) float amb;
@@ -26,6 +32,7 @@ struct GlobalUniformBlock {
     alignas(16) glm::vec3 DlightColor;
     alignas(16) glm::vec3 AmbLightColor;
     alignas(16) glm::vec3 eyePos;
+	PointLight pointLights[MAX_LIGHTS];
 };
 
 struct VertexMesh {
@@ -43,28 +50,32 @@ class Dealership : public BaseProject {
 
     // Descriptor Layouts ["classes" of what will be passed to the shaders]
     DescriptorSetLayout DSLGubo, DSLEnv;
-    DescriptorSetLayout DSLCar, DSLCar1, DSLCar2;
+    DescriptorSetLayout DSLCar, DSLCar1, DSLCar2, DSLSpotlight;
+
 
     // Vertex formats
     VertexDescriptor VMesh;
 
     // Pipelines [Shader couples]
-    Pipeline PMesh, PCar1, PCar2, PCar;
+    Pipeline PMesh, PCar1, PCar2, PCar, PSpotlight;
 
-    DescriptorSet DSEnv, DSShow, DSGubo, DSDoor, DSSphere;
+    DescriptorSet DSEnv, DSShow, DSGubo, DSDoor, DSSphere, DSSpotlight[MAX_LIGHTS];
     DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
 
     // Models, textures and Descriptors (values assigned to the uniforms)
-    Model<VertexMesh> MEnv, MShow, MSphere, MDoor;
+    Model<VertexMesh> MEnv, MShow, MSphere, MDoor, MSpotlight[MAX_LIGHTS];
     Model<VertexMesh> MCar1, MCar2, MCar3, MCar4, MCar5;
 
     // C++ storage for uniform variables
-    MeshUniformBlock mubCar, mubEnv;
+	MeshUniformBlock mubCar, mubEnv, uboSpotlight; //to change
 
     GlobalUniformBlock gub;
 
     Texture TEnv, TEnv_1, TEnv_2;
     Texture TDoor, TDoor_1, TDoor_2;
+
+    Texture TSpotlight_0, TSpotlight_1, TSpotlight_2, TSpotlight_3;
+
     Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
     Texture TCar2_0, TCar2_1, TCar2_2, TCar2_3;
     Texture TCar3_0, TCar3_1, TCar3_2, TCar3_3;
@@ -143,6 +154,14 @@ class Dealership : public BaseProject {
                     {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                 });
 
+		DSLSpotlight.init(this, {
+					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+			});
+
         DSLGubo.init(this, {
                     {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
             });
@@ -167,8 +186,11 @@ class Dealership : public BaseProject {
                                                         //shaders/BlinnNormMapFrag.spv -- MeshFrag.spv*/
         //PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", { &DSLGubo, &DSLCar });
 
+
         PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMap2.spv", {&DSLGubo, &DSLEnv});
         PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
+		
+		PSpotlight.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/SpotlightShaderFrag.spv", {&DSLGubo, &DSLSpotlight});
 
         /* Models */
         createEnvMesh(MEnv.vertices, MEnv.indices);
@@ -188,6 +210,12 @@ class Dealership : public BaseProject {
 
         MDoor.init(this, &VMesh, "models/door/door.gltf", GLTF);
 
+
+		for (int i = 0; i < MAX_LIGHTS; i++)
+		{
+			MSpotlight[i].init(this, &VMesh, "models/Spotlight.obj", OBJ);
+		}
+		
         /* Textures */
         TCar1_0.init(this, "textures/Car1/cb_car_baseColor.png");
         TCar1_1.init(this, "textures/Car1/cb_car_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
@@ -202,6 +230,11 @@ class Dealership : public BaseProject {
         TCar4_0.init(this, "textures/Car4/baseColor.png");
 
         TCar5_0.init(this, "textures/Car5/baseColor.png");
+
+		TSpotlight_0.init(this, "textures/Spotlight/baseColor.png");
+        TSpotlight_1.init(this, "textures/Spotlight/normal.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TSpotlight_2.init(this, "textures/Spotlight/roughness.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TSpotlight_3.init(this, "textures/Spotlight/emission.png", VK_FORMAT_R8G8B8A8_UNORM);
 
         TEnv.init(this, "textures/TextureRoom2.jpg");
         TEnv_1.init(this, "textures/TextureRoom_norm.jpg", VK_FORMAT_R8G8B8A8_UNORM);
@@ -219,6 +252,7 @@ class Dealership : public BaseProject {
         PCar1.create();
         PCar2.create();
         PCar.create();
+        PSpotlight.create();
 
         // Here you define the data set
         DSEnv.init(this, &DSLEnv, {
@@ -248,6 +282,18 @@ class Dealership : public BaseProject {
                 {2, TEXTURE, 0, &TEnv_1},
                 {3, TEXTURE, 0, &TEnv_2}
         });
+
+		for (int i = 0; i < MAX_LIGHTS; i++)
+		{
+			DSSpotlight[i].init(this, &DSLSpotlight, {
+				{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+				{1, TEXTURE, 0, &TSpotlight_0},
+				{2, TEXTURE, 0, &TSpotlight_1},
+				{3, TEXTURE, 0, &TSpotlight_2},
+				{4, TEXTURE, 0, &TSpotlight_3},
+			});
+		}
+
 
         //DSCar1.init(this, &DSLCar, {
         DSCar1.init(this, &DSLCar1, {
@@ -301,6 +347,7 @@ class Dealership : public BaseProject {
         PCar1.cleanup();
         PCar2.cleanup();
         PCar.cleanup();
+        PSpotlight.cleanup();
 
         DSCar1.cleanup();
         DSCar2.cleanup();
@@ -312,6 +359,10 @@ class Dealership : public BaseProject {
         DSEnv.cleanup();
         DSShow.cleanup();
         DSSphere.cleanup();
+		for (int i = 0; i < MAX_LIGHTS; i++)
+		{
+			DSSpotlight[i].cleanup();
+		}
     }
 
     // Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -337,6 +388,11 @@ class Dealership : public BaseProject {
         TEnv.cleanup();
         TEnv_1.cleanup();
         TEnv_2.cleanup();
+
+        TSpotlight_0.cleanup();
+        TSpotlight_1.cleanup();
+        TSpotlight_2.cleanup();
+        TSpotlight_3.cleanup();
         //TShow.cleanup();
 
         TDoor.cleanup();
@@ -353,6 +409,10 @@ class Dealership : public BaseProject {
         MShow.cleanup();
         MDoor.cleanup();
         MSphere.cleanup();
+		for (int i = 0; i < MAX_LIGHTS; i++)
+		{
+			MSpotlight[i].cleanup();
+		}
 
         // Cleanup descriptor set layouts
         DSLCar1.cleanup();
@@ -361,12 +421,14 @@ class Dealership : public BaseProject {
         DSLCar.cleanup();
         DSLGubo.cleanup();
         DSLEnv.cleanup();
+        DSLSpotlight.cleanup();
         
         // Destroys the pipelines
         PMesh.destroy();
         PCar1.destroy();
         PCar2.destroy();
         PCar.destroy();
+        PSpotlight.destroy();
     }
     
     // Here it is the creation of the command buffer:
@@ -398,6 +460,16 @@ class Dealership : public BaseProject {
         DSDoor.bind(commandBuffer, PMesh, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
             static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
+
+		PSpotlight.bind(commandBuffer);
+		DSGubo.bind(commandBuffer, PSpotlight, 0, currentImage);
+		for (int i = 0; i < MAX_LIGHTS; i++)
+		{
+			MSpotlight[i].bind(commandBuffer);		
+			DSSpotlight[i].bind(commandBuffer, PSpotlight, 1, currentImage);
+			vkCmdDrawIndexed(commandBuffer,
+				static_cast<uint32_t>(MSpotlight[i].indices.size()), 1, 0, 0, 0);
+		}
 
         switch(currCarModel) {
             case 0:
@@ -549,6 +621,21 @@ class Dealership : public BaseProject {
         static auto lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
         static auto lightPosOld = lightPos;
         static auto colorOld = glm::vec3(colorX, colorY, colorZ);
+
+
+		gub.pointLights[0].lightColor = glm::vec4(glm::vec3(0.0f, 10.0f, 0.0f), 1.0f);
+		gub.pointLights[1].lightColor = glm::vec4(glm::vec3(0.0f, 0.0f, 10.0f), 1.0f);
+		gub.pointLights[2].lightColor = glm::vec4(glm::vec3(10.0f, 0.0f, 0.0f), 1.0f);
+		gub.pointLights[3].lightColor = glm::vec4(glm::vec3(1.0f, 10.0f, 1.0f), 1.0f);
+		const float radius = 4.0f; // Radius of the circle
+		glm::vec3 circleCenter = glm::vec3(6.0f, 5.5f, 6.0f); // Center position of the circle
+		glm::vec3 targetPoint = glm::vec3(6.0f, 0.0f, 6.0f); // Target point in the center
+
+		for (int i = 0; i < MAX_LIGHTS; i++)
+		{
+			float angle = i * (2 * glm::pi<float>()) / MAX_LIGHTS; // Calculate the angle for each light
+			gub.pointLights[i].lightPos = circleCenter + glm::vec3(radius * cos(angle), 0.0f, radius * sin(angle));
+		}
 
         // Key press parameters
         static bool debounce = false;
@@ -804,6 +891,7 @@ class Dealership : public BaseProject {
         DSEnv.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
         //DSEnv.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
+
         mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::rotate(glm::translate(glm::mat4(1.0f),
                                    glm::vec3(6.0f, 0.0f, 6.0f)),ShowRot,
@@ -835,6 +923,29 @@ class Dealership : public BaseProject {
         // Mapping of the sphere
         DSSphere.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
         //DSSphere.map((int)currentImage, &gubo, sizeof(gubo), 1);
+
+
+        DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
+
+		
+
+		uboSpotlight.amb = 1.0f;
+		uboSpotlight.gamma = 180.0f;
+		uboSpotlight.sColor = glm::vec3(1.0f);
+
+		for (int i = 0; i < MAX_LIGHTS; i++)
+		{
+			glm::vec3 direction = -glm::normalize(targetPoint - gub.pointLights[i].lightPos); // Calculate the direction towards the target point
+			glm::vec3 up = glm::vec3(0, -1, -1.1f); // Define the up direction
+
+			glm::mat4 rotationMat = glm::lookAt(glm::vec3(0.0f), direction, up); // Create a rotation matrix based on the direction and up vectors
+
+			uboSpotlight.mMat = glm::scale(glm::translate(glm::mat4(1.0f), gub.pointLights[i].lightPos) * rotationMat, glm::vec3(2));
+			uboSpotlight.mvpMat = ViewPrj * uboSpotlight.mMat;
+			uboSpotlight.nMat = glm::inverse(glm::transpose(uboSpotlight.mMat));
+			DSSpotlight[i].map((int)currentImage, &uboSpotlight, sizeof(uboSpotlight), 0);
+		}
+
 
 
         switch(currCarModel) {
