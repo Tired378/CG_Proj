@@ -67,7 +67,7 @@ class Dealership : public BaseProject {
     Model<VertexMesh> MCar1, MCar2, MCar3, MCar4, MCar5;
 
     // C++ storage for uniform variables
-	MeshUniformBlock mubCar, mubEnv, uboSpotlight; //to change
+	MeshUniformBlock mubCar, mubEnv, mubSpotlight; //to change
 
     GlobalUniformBlock gub;
 
@@ -113,7 +113,7 @@ class Dealership : public BaseProject {
         /* Dealership */
         /* Update the requirements for the size of the pool */
         uniformBlocksInPool = 28;
-        texturesInPool = 27;
+        texturesInPool = 37;
         setsInPool = 28;
         
         Ar = (float)windowWidth / (float)windowHeight;
@@ -211,9 +211,9 @@ class Dealership : public BaseProject {
         MDoor.init(this, &VMesh, "models/door/door.gltf", GLTF);
 
 
-		for (int i = 0; i < MAX_LIGHTS; i++)
+		for (auto & i : MSpotlight)
 		{
-			MSpotlight[i].init(this, &VMesh, "models/Spotlight.obj", OBJ);
+			i.init(this, &VMesh, "models/Spotlight.obj", OBJ);
 		}
 		
         /* Textures */
@@ -283,9 +283,9 @@ class Dealership : public BaseProject {
                 {3, TEXTURE, 0, &TEnv_2}
         });
 
-		for (int i = 0; i < MAX_LIGHTS; i++)
+		for (auto & i : DSSpotlight)
 		{
-			DSSpotlight[i].init(this, &DSLSpotlight, {
+			i.init(this, &DSLSpotlight, {
 				{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
 				{1, TEXTURE, 0, &TSpotlight_0},
 				{2, TEXTURE, 0, &TSpotlight_1},
@@ -359,9 +359,9 @@ class Dealership : public BaseProject {
         DSEnv.cleanup();
         DSShow.cleanup();
         DSSphere.cleanup();
-		for (int i = 0; i < MAX_LIGHTS; i++)
+		for (auto & i : DSSpotlight)
 		{
-			DSSpotlight[i].cleanup();
+			i.cleanup();
 		}
     }
 
@@ -409,9 +409,9 @@ class Dealership : public BaseProject {
         MShow.cleanup();
         MDoor.cleanup();
         MSphere.cleanup();
-		for (int i = 0; i < MAX_LIGHTS; i++)
+		for (auto & i : MSpotlight)
 		{
-			MSpotlight[i].cleanup();
+			i.cleanup();
 		}
 
         // Cleanup descriptor set layouts
@@ -865,14 +865,6 @@ class Dealership : public BaseProject {
 
         GameLogic();
 
-        //TODO: remove global uniform buffer object
-        //global room illumination
-        /*gubo.selector = glm::vec3(showNormal || showUV ? 0 : 1, showNormal ? 1 : 0, showUV ? 1 : 0);
-        //gubo.lightPos = lightPos;
-        gubo.lightDir = glm::normalize(glm::vec3(0, 1, 0));
-        gubo.lightColor = glm::vec4(1.0f, 1.0f, 1.0f, 1.0f);
-        gubo.eyePos = cameraPos;*/
-
         // Car Point light
         gub.DlightPos = lightPos;
         gub.DlightDir = glm::normalize(lightPos - glm::vec3(6.0f, 1.0f, 6.0f));
@@ -889,8 +881,6 @@ class Dealership : public BaseProject {
 
         // Mapping of the room
         DSEnv.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
-        //DSEnv.map((int)currentImage, &gubo, sizeof(gubo), 1);
-
 
         mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::rotate(glm::translate(glm::mat4(1.0f),
@@ -901,7 +891,6 @@ class Dealership : public BaseProject {
 
         // Mapping of the Showcase platform
         DSShow.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
-        //DSShow.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
         mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::rotate(glm::rotate(glm::scale(
@@ -913,7 +902,6 @@ class Dealership : public BaseProject {
 
         // Mapping of the Door
         DSDoor.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
-        //DSDoor.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
         mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2));
@@ -922,16 +910,12 @@ class Dealership : public BaseProject {
 
         // Mapping of the sphere
         DSSphere.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
-        //DSSphere.map((int)currentImage, &gubo, sizeof(gubo), 1);
 
+        //DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
 
-        DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
-
-		
-
-		uboSpotlight.amb = 1.0f;
-		uboSpotlight.gamma = 180.0f;
-		uboSpotlight.sColor = glm::vec3(1.0f);
+	    mubSpotlight.amb = 1.0f;
+	    mubSpotlight.gamma = 180.0f;
+	    mubSpotlight.sColor = glm::vec3(1.0f);
 
 		for (int i = 0; i < MAX_LIGHTS; i++)
 		{
@@ -940,10 +924,10 @@ class Dealership : public BaseProject {
 
 			glm::mat4 rotationMat = glm::lookAt(glm::vec3(0.0f), direction, up); // Create a rotation matrix based on the direction and up vectors
 
-			uboSpotlight.mMat = glm::scale(glm::translate(glm::mat4(1.0f), gub.pointLights[i].lightPos) * rotationMat, glm::vec3(2));
-			uboSpotlight.mvpMat = ViewPrj * uboSpotlight.mMat;
-			uboSpotlight.nMat = glm::inverse(glm::transpose(uboSpotlight.mMat));
-			DSSpotlight[i].map((int)currentImage, &uboSpotlight, sizeof(uboSpotlight), 0);
+			mubSpotlight.mMat = glm::scale(glm::translate(glm::mat4(1.0f), gub.pointLights[i].lightPos) * rotationMat, glm::vec3(2));
+			mubSpotlight.mvpMat = ViewPrj * mubSpotlight.mMat;
+			mubSpotlight.nMat = glm::inverse(glm::transpose(mubSpotlight.mMat));
+			DSSpotlight[i].map((int)currentImage, &mubSpotlight, sizeof(mubSpotlight), 0);
 		}
 
 
