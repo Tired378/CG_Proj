@@ -183,11 +183,8 @@ class Dealership : public BaseProject {
         PCar1.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1ShaderFrag.spv", {&DSLGubo, &DSLCar1});
         PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
         PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/CarShaderFrag.spv", {&DSLGubo, &DSLCar});
-                                                        //shaders/BlinnNormMapFrag.spv -- MeshFrag.spv*/
-        //PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", { &DSLGubo, &DSLCar });
 
-
-        PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMap2.spv", {&DSLGubo, &DSLEnv});
+        PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLEnv});
         PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 		
 		PSpotlight.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/SpotlightShaderFrag.spv", {&DSLGubo, &DSLSpotlight});
@@ -237,12 +234,12 @@ class Dealership : public BaseProject {
         TSpotlight_3.init(this, "textures/Spotlight/emission.png", VK_FORMAT_R8G8B8A8_UNORM);
 
         TEnv.init(this, "textures/TextureRoom2.jpg");
-        TEnv_1.init(this, "textures/TextureRoom_norm.jpg", VK_FORMAT_R8G8B8A8_UNORM);
-        TEnv_2.init(this, "textures/TextureRoom_roughness.jpg", VK_FORMAT_R8G8B8A8_UNORM);
+        TEnv_1.init(this, "textures/TextureRoom_roughness.jpg", VK_FORMAT_R8G8B8A8_UNORM);
+        TEnv_2.init(this, "textures/TextureRoom_norm.jpg", VK_FORMAT_R8G8B8A8_UNORM);
 
         TDoor.init(this, "textures/door/Door_baseColor.jpeg");
-        TDoor_1.init(this, "textures/door/Door_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
-        TDoor_2.init(this, "textures/door/Door_metallicRoughness.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TDoor_1.init(this, "textures/door/Door_metallicRoughness.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TDoor_2.init(this, "textures/door/Door_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
     }
     
     // Here you create your pipelines and Descriptor Sets!
@@ -697,15 +694,15 @@ class Dealership : public BaseProject {
                     curDebounce = GLFW_KEY_J;
                     if (currentColorPtr == &colorX) {
                         currentColorPtr = &colorZ;
-                        std::cout << "Switched to Z." << std::endl;
+                        std::cout << "Switched to B." << std::endl;
                     }
                     else if (currentColorPtr == &colorY) {
                         currentColorPtr = &colorX;
-                        std::cout << "Switched to X." << std::endl;
+                        std::cout << "Switched to R." << std::endl;
                     }
                     else {
                         currentColorPtr = &colorY;
-                        std::cout << "Switched to Y." << std::endl;
+                        std::cout << "Switched to G." << std::endl;
                     }
                 }
             } else {
@@ -720,15 +717,15 @@ class Dealership : public BaseProject {
                     curDebounce = GLFW_KEY_L;
                     if (currentColorPtr == &colorX) {
                         currentColorPtr = &colorY;
-                        std::cout << "Switched to Y." << std::endl;
+                        std::cout << "Switched to G." << std::endl;
                     }
                     else if (currentColorPtr == &colorY) {
                         currentColorPtr = &colorZ;
-                        std::cout << "Switched to Z." << std::endl;
+                        std::cout << "Switched to B." << std::endl;
                     }
                     else {
                         currentColorPtr = &colorX;
-                        std::cout << "Switched to X." << std::endl;
+                        std::cout << "Switched to R." << std::endl;
                     }
                 }
             } else {
