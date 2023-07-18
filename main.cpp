@@ -623,13 +623,13 @@ class Dealership : public BaseProject {
         static auto colorOld = glm::vec3(colorX, colorY, colorZ);
 
 
-		gub.pointLights[0].lightColor = glm::vec4(glm::vec3(0.0f, 10.0f, 0.0f), 1.0f);
-		gub.pointLights[1].lightColor = glm::vec4(glm::vec3(0.0f, 0.0f, 10.0f), 1.0f);
-		gub.pointLights[2].lightColor = glm::vec4(glm::vec3(10.0f, 0.0f, 0.0f), 1.0f);
+		gub.pointLights[0].lightColor = glm::vec4(glm::vec3(1.0f, 10.0f, 1.0f), 1.0f);
+		gub.pointLights[1].lightColor = glm::vec4(glm::vec3(1.0f, 1.0f, 10.0f), 1.0f);
+		gub.pointLights[2].lightColor = glm::vec4(glm::vec3(10.0f, 1.0f, 1.0f), 1.0f);
 		gub.pointLights[3].lightColor = glm::vec4(glm::vec3(1.0f, 10.0f, 1.0f), 1.0f);
 		const float radius = 4.0f; // Radius of the circle
 		glm::vec3 circleCenter = glm::vec3(6.0f, 5.5f, 6.0f); // Center position of the circle
-		glm::vec3 targetPoint = glm::vec3(6.0f, 0.0f, 6.0f); // Target point in the center
+		glm::vec3 targetPoint = glm::vec3(6.0f, 1.0f, 6.0f); // Target point in the center
 
 		for (int i = 0; i < MAX_LIGHTS; i++)
 		{
@@ -867,7 +867,7 @@ class Dealership : public BaseProject {
 
         // Car Point light
         gub.DlightPos = lightPos;
-        gub.DlightDir = glm::normalize(lightPos - glm::vec3(6.0f, 1.0f, 6.0f));
+        gub.DlightDir = glm::normalize(lightPos - targetPoint);
         gub.DlightColor = glm::vec4(colorX, colorY, colorZ, 1.0f);
         gub.AmbLightColor = glm::vec3(0.1f);
         gub.eyePos = cameraPos;
@@ -911,8 +911,6 @@ class Dealership : public BaseProject {
         // Mapping of the sphere
         DSSphere.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
-        //DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
-
 	    mubSpotlight.amb = 1.0f;
 	    mubSpotlight.gamma = 180.0f;
 	    mubSpotlight.sColor = glm::vec3(1.0f);
@@ -929,8 +927,6 @@ class Dealership : public BaseProject {
 			mubSpotlight.nMat = glm::inverse(glm::transpose(mubSpotlight.mMat));
 			DSSpotlight[i].map((int)currentImage, &mubSpotlight, sizeof(mubSpotlight), 0);
 		}
-
-
 
         switch(currCarModel) {
             case 0:
