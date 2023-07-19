@@ -56,7 +56,7 @@ class Dealership : public BaseProject {
     VertexDescriptor VMesh;
 
     // Pipelines [Shader couples]
-    Pipeline PMesh, PCar1, PCar2, PCar, PSpotlight;
+    Pipeline PMesh, PDoor, PCar1, PCar2, PCar, PSpotlight;
 
     DescriptorSet DSEnv, DSShow, DSGubo, DSDoor, DSSphere, DSSpotlight[MAX_LIGHTS];
     DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
@@ -183,9 +183,12 @@ class Dealership : public BaseProject {
         PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
         PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/CarShaderFrag.spv", {&DSLGubo, &DSLCar});
 
-        PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLEnv});
+        //PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLEnv});
+	    PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLEnv});
         PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
-		
+
+	    PDoor.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/DoorFrag.spv", {&DSLGubo, &DSLEnv});
+
 		PSpotlight.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/SpotlightShaderFrag.spv", {&DSLGubo, &DSLSpotlight});
 
         /* Models */
@@ -233,12 +236,12 @@ class Dealership : public BaseProject {
         TSpotlight_3.init(this, "textures/Spotlight/emission.png", VK_FORMAT_R8G8B8A8_UNORM);
 
         TEnv.init(this, "textures/TextureRoom2.jpg");
-        TEnv_1.init(this, "textures/TextureRoom_roughness.jpg", VK_FORMAT_R8G8B8A8_UNORM);
-        TEnv_2.init(this, "textures/TextureRoom_norm.jpg", VK_FORMAT_R8G8B8A8_UNORM);
+        TEnv_1.init(this, "textures/TextureRoom_norm.jpg", VK_FORMAT_R8G8B8A8_UNORM);
+        TEnv_2.init(this, "textures/TextureRoom_roughness.jpg", VK_FORMAT_R8G8B8A8_UNORM);
 
         TDoor.init(this, "textures/door/Door_baseColor.jpeg");
-        TDoor_1.init(this, "textures/door/Door_metallicRoughness.png", VK_FORMAT_R8G8B8A8_UNORM);
-        TDoor_2.init(this, "textures/door/Door_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TDoor_1.init(this, "textures/door/Door_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
+        TDoor_2.init(this, "textures/door/Door_metallicRoughness.png", VK_FORMAT_R8G8B8A8_UNORM);
     }
     
     // Here you create your pipelines and Descriptor Sets!
@@ -248,6 +251,7 @@ class Dealership : public BaseProject {
         PCar1.create();
         PCar2.create();
         PCar.create();
+		PDoor.create();
         PSpotlight.create();
 
         // Here you define the data set
@@ -337,6 +341,7 @@ class Dealership : public BaseProject {
         PCar1.cleanup();
         PCar2.cleanup();
         PCar.cleanup();
+		PDoor.cleanup();
         PSpotlight.cleanup();
 
         DSCar1.cleanup();
@@ -416,6 +421,7 @@ class Dealership : public BaseProject {
         PCar1.destroy();
         PCar2.destroy();
         PCar.destroy();
+		PDoor.destroy();
         PSpotlight.destroy();
     }
     
@@ -444,8 +450,9 @@ class Dealership : public BaseProject {
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MSphere.indices.size()), 1, 0, 0, 0);
 
+		PDoor.bind(commandBuffer);
         MDoor.bind(commandBuffer);
-        DSDoor.bind(commandBuffer, PMesh, 1, currentImage);
+        DSDoor.bind(commandBuffer, PDoor, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
             static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
 
