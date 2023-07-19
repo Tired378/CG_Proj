@@ -900,8 +900,8 @@ class Dealership : public BaseProject {
         DSSphere.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
 	    mubSpotlight.amb = 1.0f;
-	    mubSpotlight.gamma = 180.0f;
-	    mubSpotlight.sColor = glm::vec3(1.0f);
+	    mubSpotlight.gamma = 1000.0f;
+	    mubSpotlight.sColor = 0.9f * glm::vec3(1.0f);
 
 		for (int i = 0; i < MAX_LIGHTS; i++)
 		{
@@ -915,10 +915,30 @@ class Dealership : public BaseProject {
 			mubSpotlight.nMat = glm::inverse(glm::transpose(mubSpotlight.mMat));
 			DSSpotlight[i].map((int)currentImage, &mubSpotlight, sizeof(mubSpotlight), 0);
 		}
-
+		//to test gamma **************************REMOVE********
+		static float gamma = 1000.0f;
+		if (glfwGetKey(window, GLFW_KEY_KP_4)) {
+			gamma = gamma + 1.0f;
+			std::cout << "gamma= "<< gamma << std::endl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_KP_1)) {
+			gamma = glm::max(gamma - 1.0f, 0.0f);
+			std::cout << "gamma= " << gamma << std::endl;
+		}
+		//to test metallic factor 
+		static float Ms_factor = 0.9f;
+		if (glfwGetKey(window, GLFW_KEY_KP_5)) {
+			Ms_factor = Ms_factor + 1.0f;
+			std::cout << "Ms_factor= "<< Ms_factor << std::endl;
+		}
+		if (glfwGetKey(window, GLFW_KEY_KP_2)) {
+			Ms_factor = glm::max(Ms_factor - 1.0f, 0.0f);
+			std::cout << "Ms_factor= " << Ms_factor << std::endl;
+		}
+		//*********************************************************
         switch(currCarModel) {
             case 0:
-                mubCar.amb = 1.0f; mubCar.gamma = 180.0f; mubCar.sColor = glm::vec3(1.0f);
+                mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
                 mubCar.mMat = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
                                                                     glm::vec3(6.0f, 0.1f, 6.0f)),
                                                      glm::vec3(0.012, 0.012, 0.012)), ShowRot,
@@ -928,7 +948,7 @@ class Dealership : public BaseProject {
                 DSCar1.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 1:
-                mubCar.amb = 1.0f; mubCar.gamma = 180.0f; mubCar.sColor = glm::vec3(1.0f);
+				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
                 mubCar.mMat = glm::rotate(glm::scale(
                         glm::translate(glm::mat4(1.0f),glm::vec3(6.0f, 0.1f, 6.0f)),
                          glm::vec3(0.0115, 0.0115, 0.0115)), ShowRot, glm::vec3(0,1,0));
@@ -937,7 +957,7 @@ class Dealership : public BaseProject {
                 DSCar2.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 2:
-                mubCar.amb = 1.0f; mubCar.gamma = 180.0f; mubCar.sColor = glm::vec3(1.0f);
+				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
                 mubCar.mMat = glm::rotate(glm::scale(
                         glm::rotate(
                         glm::rotate(
@@ -951,7 +971,7 @@ class Dealership : public BaseProject {
                 DSCar3.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 3:
-                mubCar.amb = 1.0f; mubCar.gamma = 180.0f; mubCar.sColor = glm::vec3(1.0f);
+				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
                 mubCar.mMat = glm::rotate(
                         glm::scale(
                         glm::rotate(
@@ -967,7 +987,7 @@ class Dealership : public BaseProject {
                 DSCar4.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 4:
-                mubCar.amb = 1.0f; mubCar.gamma = 180.0f; mubCar.sColor = glm::vec3(1.0f);
+				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
                 mubCar.mMat = glm::rotate(glm::scale(
                           glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)),
                            glm::vec3(1.3, 1.3, 1.3)),
