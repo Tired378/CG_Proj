@@ -54,7 +54,7 @@ class Dealership : public BaseProject {
     DescriptorSetLayout DSLCar, DSLCar1, DSLCar2, DSLSpotlight;
 
     // Vertex formats
-    VertexDescriptor VMesh;
+    VertexDescriptor VMesh, VCar1;
 
     // Pipelines [Shader couples]
     Pipeline PMesh, PDoor, PCar1, PCar2, PCar, PSpotlight;
@@ -181,8 +181,21 @@ class Dealership : public BaseProject {
 		                  sizeof(glm::vec4), TANGENT},
                 });
 
+	    VCar1.init(this, {
+			    {0, sizeof(VertexMesh), VK_VERTEX_INPUT_RATE_VERTEX}
+	    }, {
+			               {0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, pos),
+					               sizeof(glm::vec3), POSITION},
+			               {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
+					               sizeof(glm::vec3), NORMAL},
+			               {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, tan),
+					               sizeof(glm::vec4), TANGENT},
+			               {0, 3, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
+					               sizeof(glm::vec2), UV},
+	               });
+
         // Pipelines [Shader couples]
-        PCar1.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1ShaderFrag.spv", {&DSLGubo, &DSLCar1});
+        PCar1.init(this, &VCar1, "shaders/Car1Vert.spv", "shaders/Car1ShaderFrag.spv", {&DSLGubo, &DSLCar1});
         PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
         PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/CarShaderFrag.spv", {&DSLGubo, &DSLCar});
 
@@ -205,7 +218,7 @@ class Dealership : public BaseProject {
         createSphereMesh(MSphere.vertices, MSphere.indices);
         MSphere.initMesh(this, &VMesh);
 
-        MCar1.init(this, &VMesh, "Models/Car1.gltf", GLTF);
+        MCar1.init(this, &VCar1, "Models/Car1.gltf", GLTF);
         MCar2.init(this, &VMesh, "Models/Car2.obj", OBJ);
         MCar3.init(this, &VMesh, "Models/Car3.obj", OBJ);
         MCar4.init(this, &VMesh, "Models/Car4.obj", OBJ);
