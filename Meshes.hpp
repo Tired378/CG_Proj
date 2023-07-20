@@ -58,6 +58,8 @@ void Dealership::createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32
 	// Close wall
 	vIdx.push_back(20); vIdx.push_back(21); vIdx.push_back(22);	// First triangle
 	vIdx.push_back(21); vIdx.push_back(22); vIdx.push_back(23);	// Second triangle
+
+	generate_tangents(vDef, vIdx);
 }
 
 void Dealership::createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx) {
@@ -104,6 +106,8 @@ void Dealership::createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<u
 
     vIdx.push_back(vDef.size()-3); vIdx.push_back(vDef.size()-1); vIdx.push_back(3);
     vIdx.push_back(5); vIdx.push_back(vDef.size()-1); vIdx.push_back(3);
+
+	generate_tangents(vDef, vIdx);
 }
 
 void Dealership::createSphereMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx) {
@@ -162,5 +166,43 @@ void Dealership::createSphereMesh(std::vector<VertexMesh> &vDef, std::vector<uin
 		vDef.push_back({{0.0f, -1.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {currentUCoord, 1.0f}});	// vertex 0 - Position, Normal and uv
 		vIdx.push_back(vDef.size()-1); vIdx.push_back(firstVertex + t); vIdx.push_back(firstVertex + t + 1);
 		currentUCoord += uCoordStep;
+	}
+
+	generate_tangents(vDef, vIdx);
+}
+
+void Dealership::generate_tangents(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx) {
+	auto index_count = vIdx.size();
+	for (uint32_t i = 0; i < index_count; i+=3){
+		uint32_t i0 = vIdx[i + 0];
+		uint32_t i1 = vIdx[i + 1];
+		uint32_t i2 = vIdx[i + 2];
+
+		glm::vec3 edge1 = vDef[i1].pos - vDef[i0].pos;
+		glm::vec3 edge2 = vDef[i2].pos - vDef[i0].pos;
+
+		float deltaU1 = vDef[i1].UV.x - vDef[i0].UV.x;
+		float deltaV1 = vDef[i1].UV.y - vDef[i0].UV.y;
+
+		float deltaU2 = vDef[i2].UV.x - vDef[i0].UV.x;
+		float deltaV2 = vDef[i2].UV.y - vDef[i0].UV.y;
+
+		float dividend = (deltaU1 * deltaV2 - deltaU2 * deltaV1);
+		float fc = 1.0f / dividend;
+
+		glm::vec3 tangent = glm::vec3(
+				(fc * (deltaV2 * edge1.x - deltaV1 * edge2.x)),
+				(fc * (deltaV2 * edge1.y - deltaV1 * edge2.y)),
+				(fc * (deltaV2 * edge1.z - deltaV1 * edge2.z)));
+
+		tangent = glm::normalize(tangent);
+
+		float sx = deltaU1, sy = deltaU2;
+		float tx = deltaV1, ty = deltaV2;
+		float handedness = ((tx * sy - ty * sx) < 0.0f) ? -1.0f : 1.0f;
+		auto t4 = glm::vec4(tangent, handedness);
+		vDef[i0].tan = t4;
+		vDef[i1].tan = t4;
+		vDef[i2].tan = t4;
 	}
 }

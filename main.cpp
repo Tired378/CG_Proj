@@ -39,6 +39,7 @@ struct VertexMesh {
     alignas(16) glm::vec3 pos;
     alignas(16) glm::vec3 norm;
     alignas(8) glm::vec2 UV;
+	alignas(16) glm::vec4 tan;
 };
 
 // MAIN !
@@ -175,7 +176,9 @@ class Dealership : public BaseProject {
                   {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
                          sizeof(glm::vec3), NORMAL},
                   {0, 2, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
-                         sizeof(glm::vec2), UV}
+                         sizeof(glm::vec2), UV},
+                  {0, 3, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, tan),
+		                  sizeof(glm::vec4), TANGENT},
                 });
 
         // Pipelines [Shader couples]
@@ -193,6 +196,7 @@ class Dealership : public BaseProject {
 
         /* Models */
         createEnvMesh(MEnv.vertices, MEnv.indices);
+	    //generate_tangents(MEnv.vertices, MEnv.indices);
         MEnv.initMesh(this, &VMesh);
 
         createShowcaseMesh(MShow.vertices, MShow.indices);
@@ -623,8 +627,8 @@ class Dealership : public BaseProject {
 		gub.pointLights[2].lightColor = glm::vec4(glm::vec3(10.0f, 1.0f, 1.0f), 1.0f);
 		gub.pointLights[3].lightColor = glm::vec4(glm::vec3(1.0f, 10.0f, 1.0f), 1.0f);
 		const float radius = 4.0f; // Radius of the circle
-		glm::vec3 circleCenter = glm::vec3(6.0f, 5.5f, 6.0f); // Center position of the circle
-		glm::vec3 targetPoint = glm::vec3(6.0f, 1.0f, 6.0f); // Target point in the center
+		auto circleCenter = glm::vec3(6.0f, 5.5f, 6.0f); // Center position of the circle
+		auto targetPoint = glm::vec3(6.0f, 1.0f, 6.0f); // Target point in the center
 
 		for (int i = 0; i < MAX_LIGHTS; i++)
 		{
@@ -852,8 +856,7 @@ class Dealership : public BaseProject {
         if (lightPos.z < 0.2f) lightPos.z = 0.2f;
         else if (lightPos.z > 11.8f) lightPos.z = 11.8f;
 
-        if (lightPosOld != lightPos) std::cout << "lightPos = (" << lightPos.x << ", " << lightPos.y << ", " << lightPos.z << ")" << std::endl;
-        lightPosOld = lightPos;
+
 
         if (colorOld.x != colorX || colorOld.y != colorY || colorOld.z != colorZ) std::cout << "Color = (" << colorX << ", " << colorY << ", " << colorZ << ")" << std::endl;
         colorOld = glm::vec3(colorX, colorY, colorZ);
@@ -866,6 +869,12 @@ class Dealership : public BaseProject {
         gub.DlightColor = glm::vec4(colorX, colorY, colorZ, 1.0f);
         gub.AmbLightColor = glm::vec3(0.1f);
         gub.eyePos = cameraPos;
+
+	    if (lightPosOld != lightPos) {
+		    std::cout << "lightPos = (" << lightPos.x << ", " << lightPos.y << ", " << lightPos.z << ")" << std::endl;
+		    std::cout << gub.DlightDir.x << " " << gub.DlightDir.y << " " << gub.DlightDir.z << std::endl;
+	    }
+	    lightPosOld = lightPos;
 
         DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
 
@@ -968,7 +977,7 @@ class Dealership : public BaseProject {
                 mubCar.mMat = glm::rotate(glm::scale(
                         glm::rotate(
                         glm::rotate(
-                        glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.2f, 6.0f)),
+                        glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.5f, 6.0f)),
                       glm::radians(90.0f), glm::vec3(-1, 0, 0)),
                       glm::radians(90.0f), glm::vec3(0, 0, 1)),
                          glm::vec3(0.08, 0.08, 0.08)),
@@ -1009,6 +1018,7 @@ class Dealership : public BaseProject {
     static void createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
     static void createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
     static void createSphereMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
+	static void generate_tangents(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
 };
 
 #include "Meshes.hpp"

@@ -4,6 +4,7 @@
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNorm;
 layout(location = 2) in vec2 fragUV;
+layout(location = 3) in vec4 fragTan;
 
 layout(location = 0) out vec4 outColor;
 
@@ -50,7 +51,14 @@ vec3 BRDF(vec3 V, vec3 N, vec3 L, vec3 Md, vec3 Ms, float gamma) {
 
 void main() {
     //vec3 N = normalize(fragNorm);				// surface normal
-    vec3 N = normalize(texture(normMap, fragUV).xyz);				// surface normal
+    //vec3 N = normalize(texture(normMap, fragUV).xyz);			// surface normal
+    vec3 Norm = normalize(fragNorm);
+    vec3 Tan = normalize(fragTan.xyz - Norm * dot(fragTan.xyz, Norm));
+    vec3 Bitan = cross(Norm, Tan) * fragTan.w;
+    mat3 tbn = mat3(Tan, Bitan, Norm);
+    vec4 nMap = texture(normMap, fragUV);
+    vec3 N = normalize(tbn * (nMap.xyz * 2.0 - 1.0));
+
     vec3 V = normalize(gubo.eyePos - fragPos);	// viewer direction
     vec3 L = normalize(gubo.DlightDir);			// light direction
 
