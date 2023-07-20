@@ -867,7 +867,7 @@ class Dealership : public BaseProject {
         gub.DlightPos = lightPos;
         gub.DlightDir = glm::normalize(lightPos - targetPoint);
         gub.DlightColor = glm::vec4(colorX, colorY, colorZ, 1.0f);
-        gub.AmbLightColor = glm::vec3(0.1f);
+        gub.AmbLightColor = glm::vec3(0.2f);
         gub.eyePos = cameraPos;
 
 	    if (lightPosOld != lightPos) {
