@@ -57,7 +57,8 @@ class Dealership : public BaseProject {
     VertexDescriptor VMesh;
 
     // Pipelines [Shader couples]
-    Pipeline PMesh, PDoor, PCar1, PCar2, PCar, PSpotlight;
+    Pipeline PMesh, PShow, PDoor, PSpotlight;
+	Pipeline PCar1, PCar2, PCar;
 
     DescriptorSet DSEnv, DSShow, DSGubo, DSDoor, DSSphere, DSSpotlight[MAX_LIGHTS];
     DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
@@ -190,6 +191,10 @@ class Dealership : public BaseProject {
 	    PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLEnv});
         PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
+	    PShow.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/ShowFrag.spv", {&DSLGubo, &DSLEnv});
+	    PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
+
+
 	    PDoor.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/DoorFrag.spv", {&DSLGubo, &DSLEnv});
 
 		PSpotlight.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/SpotlightShaderFrag.spv", {&DSLGubo, &DSLSpotlight});
@@ -255,6 +260,7 @@ class Dealership : public BaseProject {
         PCar2.create();
         PCar.create();
 		PDoor.create();
+		PShow.create();
         PSpotlight.create();
 
         // Here you define the data set
@@ -345,6 +351,7 @@ class Dealership : public BaseProject {
         PCar2.cleanup();
         PCar.cleanup();
 		PDoor.cleanup();
+		PShow.cleanup();
         PSpotlight.cleanup();
 
         DSCar1.cleanup();
@@ -425,6 +432,7 @@ class Dealership : public BaseProject {
         PCar2.destroy();
         PCar.destroy();
 		PDoor.destroy();
+		PShow.destroy();
         PSpotlight.destroy();
     }
     
@@ -442,9 +450,9 @@ class Dealership : public BaseProject {
         vkCmdDrawIndexed(commandBuffer,
                 static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
 
-
+		PShow.bind(commandBuffer);
         MShow.bind(commandBuffer);
-        DSShow.bind(commandBuffer, PMesh, 1, currentImage);
+        DSShow.bind(commandBuffer, PShow, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MShow.indices.size()), 1, 0, 0, 0);
 
