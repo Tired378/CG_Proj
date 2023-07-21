@@ -66,7 +66,7 @@ void main() {
 
     vec4 MRAO = texture(matMap, fragUV);
     float roughness = MRAO.g;
-    float pex = 1000.f * (1.0 - roughness) * (1.0 - roughness);
+    float pex = ubo.gamma * (1.0 - roughness) * (1.0 - roughness);
     float ao = MRAO.b;
     float metallic = MRAO.r;
 
@@ -76,11 +76,11 @@ void main() {
     clamp((dot(normalize(gubo.DlightPos - fragPos), gubo.DlightDir) - cosout)/(cosin-cosout), 0.0f, 1.0f);
 
     vec3 DiffSpec = BRDF(V, N, L, albedo, 0.9f * vec3(metallic), pex);
-    vec3 Ambient = albedo * gubo.AmbLightColor * ao;
+    vec3 Ambient = albedo * gubo.AmbLightColor * ao + ubo.amb;
 
 /**vec3 emissionFactor = vec3(1.0f,1.0f,1.0f);
 	vec3 Emission = emissionFactor *  texture(emissionTex,fragUV).rgb;*/
 
-    outColor = vec4(clamp(0.95 * DiffSpec * lightColor.rgb + Ambient,0.0,1.0), 1.0f);
+    outColor = vec4(clamp(DiffSpec * lightColor.rgb + Ambient,0.0,1.0), 1.0f);
 
 }

@@ -75,6 +75,8 @@ class Dealership : public BaseProject {
     Texture TEnv, TEnv_1, TEnv_2;
     Texture TDoor, TDoor_1, TDoor_2;
 
+	Texture TSphere;
+
     Texture TSpotlight_0, TSpotlight_1, TSpotlight_2, TSpotlight_3;
 
     Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
@@ -250,6 +252,8 @@ class Dealership : public BaseProject {
         TDoor.init(this, "textures/door/Door_baseColor.jpeg");
         TDoor_1.init(this, "textures/door/Door_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
         TDoor_2.init(this, "textures/door/Door_metallicRoughness.png", VK_FORMAT_R8G8B8A8_UNORM);
+
+		TSphere.init(this, "textures/TextureSphere.png");
     }
     
     // Here you create your pipelines and Descriptor Sets!
@@ -287,9 +291,9 @@ class Dealership : public BaseProject {
 
         DSSphere.init(this, &DSLEnv, {
                 {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-                {1, TEXTURE, 0, &TEnv},
-                {2, TEXTURE, 0, &TEnv_1},
-                {3, TEXTURE, 0, &TEnv_2}
+                {1, TEXTURE, 0, &TSphere},
+                {2, TEXTURE, 0, &TSphere},
+                {3, TEXTURE, 0, &TSphere}
         });
 
 		for (auto & i : DSSpotlight)
@@ -402,6 +406,8 @@ class Dealership : public BaseProject {
         TDoor.cleanup();
         TDoor_1.cleanup();
         TDoor_2.cleanup();
+
+	    TSphere.cleanup();
 
         // Cleanup models
         MCar1.cleanup();
@@ -628,7 +634,6 @@ class Dealership : public BaseProject {
         static auto lightPosOld = lightPos;
         static auto colorOld = glm::vec3(colorX, colorY, colorZ);
 
-
 		gub.pointLights[0].lightColor = glm::vec4(glm::vec3(1.0f, 10.0f, 1.0f), 1.0f);
 		gub.pointLights[1].lightColor = glm::vec4(glm::vec3(1.0f, 1.0f, 10.0f), 1.0f);
 		gub.pointLights[2].lightColor = glm::vec4(glm::vec3(10.0f, 1.0f, 1.0f), 1.0f);
@@ -637,8 +642,7 @@ class Dealership : public BaseProject {
 		auto circleCenter = glm::vec3(6.0f, 5.5f, 6.0f); // Center position of the circle
 		auto targetPoint = glm::vec3(6.0f, 1.0f, 6.0f); // Target point in the center
 
-		for (int i = 0; i < MAX_LIGHTS; i++)
-		{
+		for (int i = 0; i < MAX_LIGHTS; i++) {
 			float angle = i * (2 * glm::pi<float>()) / MAX_LIGHTS; // Calculate the angle for each light
 			gub.pointLights[i].lightPos = circleCenter + glm::vec3(radius * cos(angle), 0.0f, radius * sin(angle));
 		}
@@ -863,8 +867,6 @@ class Dealership : public BaseProject {
         if (lightPos.z < 0.2f) lightPos.z = 0.2f;
         else if (lightPos.z > 11.8f) lightPos.z = 11.8f;
 
-
-
         if (colorOld.x != colorX || colorOld.y != colorY || colorOld.z != colorZ) std::cout << "Color = (" << colorX << ", " << colorY << ", " << colorZ << ")" << std::endl;
         colorOld = glm::vec3(colorX, colorY, colorZ);
 
@@ -885,7 +887,7 @@ class Dealership : public BaseProject {
 
         DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
 
-        mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
+        mubEnv.amb = .0f; mubEnv.gamma = 100.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::scale(glm::mat4(1), glm::vec3(3));
         mubEnv.mvpMat = ViewPrj * mubEnv.mMat;
         mubEnv.nMat = glm::inverse(glm::transpose(mubEnv.mMat));
@@ -893,7 +895,7 @@ class Dealership : public BaseProject {
         // Mapping of the room
         DSEnv.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
-        mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
+        mubEnv.amb = .0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::rotate(glm::translate(glm::mat4(1.0f),
                                    glm::vec3(6.0f, 0.0f, 6.0f)),ShowRot,
                                    glm::vec3(0,1,0));
@@ -903,7 +905,7 @@ class Dealership : public BaseProject {
         // Mapping of the Showcase platform
         DSShow.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
-        mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
+        mubEnv.amb = 0.01f; mubEnv.gamma = 100.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::rotate(glm::rotate(glm::scale(
             glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.65f, 12.0f)),
             glm::vec3(1.5)), glm::radians(-90.0f), glm::vec3(1, 0, 0)),
@@ -926,8 +928,7 @@ class Dealership : public BaseProject {
 	    mubSpotlight.gamma = 1000.0f;
 	    mubSpotlight.sColor = 0.9f * glm::vec3(1.0f);
 
-		for (int i = 0; i < MAX_LIGHTS; i++)
-		{
+		for (int i = 0; i < MAX_LIGHTS; i++) {
 			glm::vec3 direction = -glm::normalize(targetPoint - gub.pointLights[i].lightPos); // Calculate the direction towards the target point
 			glm::vec3 up = glm::vec3(0, -1, -1.1f); // Define the up direction
 
@@ -939,7 +940,7 @@ class Dealership : public BaseProject {
 			DSSpotlight[i].map((int)currentImage, &mubSpotlight, sizeof(mubSpotlight), 0);
 		}
 		//to test gamma **************************REMOVE********
-		static float gamma = 1000.0f;
+	    static float gamma = 1000.0f;
 		if (glfwGetKey(window, GLFW_KEY_KP_4)) {
 			gamma = gamma + 1.0f;
 			std::cout << "gamma= "<< gamma << std::endl;
