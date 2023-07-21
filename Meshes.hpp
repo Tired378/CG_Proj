@@ -2,15 +2,15 @@ void Dealership::createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32
 	// The primitive built here is a box centered in the origin, with proportions respecting the texture.
 
 	// Top wall & Bottom wall
-	vDef.push_back({{0.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.5f, 0.0f}});	// vertex 0 - Position and Normal
-	vDef.push_back({{4.0f, 0.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.0f}});	// vertex 1 - Position and Normal
-	vDef.push_back({{0.0f, 2.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}});	// vertex 2 - Position and Normal
-	vDef.push_back({{4.0f, 2.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 1.0f}});   // vertex 3 - Position and Normal
+	vDef.push_back({{0.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.0f}});	// vertex 0 - Position and Normal
+	vDef.push_back({{4.0f, 0.0f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}});	// vertex 1 - Position and Normal
+	vDef.push_back({{0.0f, 2.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 1.0f}});	// vertex 2 - Position and Normal
+	vDef.push_back({{4.0f, 2.0f, 0.0f}, {0.0f, -1.0f, 0.0f}, {0.5f, 1.0f}});   // vertex 3 - Position and Normal
 
-	vDef.push_back({{0.0f, 0.0f, 4.0f}, {0.0f, -1.0f, 0.0f}, {0.5f, 0.5f}});	// vertex 4 - Position and Normal
-	vDef.push_back({{4.0f, 0.0f, 4.0f}, {0.0f, -1.0f, 0.0f}, {1.0f, 0.5f}});	// vertex 5 - Position and Normal
-	vDef.push_back({{0.0f, 2.0f, 4.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.5f}});	// vertex 6 - Position and Normal
-	vDef.push_back({{4.0f, 2.0f, 4.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f}});   // vertex 7 - Position and Normal
+	vDef.push_back({{0.0f, 0.0f, 4.0f}, {0.0f, 1.0f, 0.0f}, {0.5f, 0.5f}});	// vertex 4 - Position and Normal
+	vDef.push_back({{4.0f, 0.0f, 4.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.5f}});	// vertex 5 - Position and Normal
+	vDef.push_back({{0.0f, 2.0f, 4.0f}, {0.0f, -1.0f, 0.0f}, {0.0f, 0.5f}});	// vertex 6 - Position and Normal
+	vDef.push_back({{4.0f, 2.0f, 4.0f}, {0.0f, -1.0f, 0.0f}, {0.5f, 0.5f}});   // vertex 7 - Position and Normal
 
 	// Top wall
 	vIdx.push_back(2); vIdx.push_back(3); vIdx.push_back(7);	// First triangle
