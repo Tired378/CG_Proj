@@ -1,6 +1,13 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
+#define MAX_LIGHTS 4
+struct PointLight {
+    vec3 position;
+    vec4 color;
+};
+
+
 layout(location = 0) in vec3 fragPos;
 layout(location = 1) in vec3 fragNorm;
 layout(location = 2) in vec4 fragTan;
@@ -14,6 +21,7 @@ layout(set = 0, binding = 0) uniform GlobalUniformBufferObject {
     vec3 DlightColor;	// color of the direct light
     vec3 AmbLightColor;	// ambient light
     vec3 eyePos;		// position of the viewer
+    PointLight pointLights[MAX_LIGHTS];
 } gubo;
 
 layout(set = 1, binding = 0) uniform UniformBufferObject {
@@ -26,14 +34,15 @@ layout(set = 1, binding = 0) uniform UniformBufferObject {
 } ubo;
 
 layout(set = 1, binding = 1) uniform sampler2D tex;
-layout(set = 1, binding = 2) uniform sampler2D normMap; //DA LEVARE
+layout(set = 1, binding = 2) uniform sampler2D normMap;
 layout(set = 1, binding = 3) uniform sampler2D matMap;
-//layout(set = 1, binding = 4) uniform sampler2D emissionTex;
+layout(set = 1, binding = 4) uniform sampler2D emissionTex;
 
 const float beta = 0.0f;
 const float g = 1.5;
 const float cosout = 0.85;
 const float cosin  = 0.95;
+
 
 vec3 BRDF(vec3 V, vec3 N, vec3 L, vec3 Md, vec3 Ms, float gamma) {
     //vec3 V  - direction of the viewer
@@ -42,11 +51,10 @@ vec3 BRDF(vec3 V, vec3 N, vec3 L, vec3 Md, vec3 Ms, float gamma) {
     //vec3 Md - main color of the surface
     //vec3 Ms - specular color of the surface
     //float gamma - Exponent for power specular term
-    vec3 Diffuse = Md * max(dot(L,N), 0.0f);
-    vec3 halfVector = normalize(L+V);
-    vec3 Specular = Ms * pow(clamp(dot(N, halfVector),0.0f,1.0f), gamma);
-    vec3 BRDF = Diffuse + Specular;
-    return BRDF;
+    vec3 Diffuse = Md * max(dot(N, L), 0.0f); // Lambert
+    vec3 r = - reflect(L, N);
+    vec3 Specular = Ms * pow(clamp(dot(V, r), 0.0f, 1.0f), gamma); // Phong
+    return Diffuse + Specular;
 }
 
 void main() {
@@ -66,20 +74,38 @@ void main() {
 
     vec4 MRAO = texture(matMap, fragUV);
     float roughness = MRAO.g;
-    float pex = ubo.gamma * (1.0 - roughness) * (1.0 - roughness);
+    float pex = ubo.gamma * (1.0 - roughness) * (1.0 - roughness); //ubo.gamma: 1000 default, low più satinato, high più lucido
     float ao = MRAO.b;
     float metallic = MRAO.r;
 
+    //Direct Light
     //vec3 lightColor = gubo.DlightColor.rgb;
+    //Point Light
+    //vec3 lightColor = gubo.DlightColor.rgb * pow(g/length(gubo.DlightPos - fragPos), beta);
+    //Spot Light
     vec3 lightColor = gubo.DlightColor.rgb * pow(g/length(gubo.DlightPos - fragPos), beta) *
     clamp((dot(normalize(gubo.DlightPos - fragPos), gubo.DlightDir) - cosout)/(cosin-cosout), 0.0f, 1.0f);
 
-    vec3 DiffSpec = BRDF(V, N, L, albedo, 0.9f * vec3(metallic), pex);
-    vec3 Ambient = albedo * gubo.AmbLightColor * ao + ubo.amb;
+    vec3 DiffSpec = BRDF(V, N, L, albedo, ubo.sColor * vec3(metallic), pex);
+    //**************
+    for (int i = 0; i < MAX_LIGHTS; i++) {
+        PointLight light = gubo.pointLights[i];
+        vec3 L = light.position.xyz - fragPos;
+        float attenuation = 1.0 / dot(L, L); // distance squared
+        L = normalize(L);
 
-/**vec3 emissionFactor = vec3(1.0f,1.0f,1.0f);
-	vec3 Emission = emissionFactor *  texture(emissionTex,fragUV).rgb;*/
+        float cosAngIncidence = max(dot(N, L), 0.0f);
+        vec3 intensity = light.color.xyz * light.color.w * attenuation; //cambia l'attenuation per aumentare la luce diffusa
 
-    outColor = vec4(clamp(DiffSpec * lightColor.rgb + Ambient,0.0,1.0), 1.0f);
+        DiffSpec += intensity * BRDF(V, N, L, albedo, ubo.sColor * vec3(metallic), pex);
+    }
+
+    //****************************
+    vec3 Ambient = albedo * gubo.AmbLightColor * ao * ubo.amb;
+
+    vec3 emissionFactor = vec3(1.0f,1.0f,1.0f);
+    vec3 Emission = emissionFactor *  texture(emissionTex,fragUV).rgb;
+
+    outColor = vec4(clamp(0.95 * DiffSpec * lightColor.rgb + Emission + Ambient,0.0,1.0), 1.0f);
 
 }

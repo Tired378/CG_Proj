@@ -58,7 +58,7 @@ class Dealership : public BaseProject {
 
     // Pipelines [Shader couples]
     Pipeline PMesh, PShow, PDoor, PSpotlight;
-	Pipeline PCar1, PCar2, PCar;
+	Pipeline PCar1_0, PCar1_1, PCar1_2, PCar2, PCar;
 
     DescriptorSet DSEnv, DSShow, DSGubo, DSDoor, DSSphere, DSSpotlight[MAX_LIGHTS];
     DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
@@ -80,14 +80,16 @@ class Dealership : public BaseProject {
     Texture TSpotlight_0, TSpotlight_1, TSpotlight_2, TSpotlight_3;
 
     Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
-    Texture TCar2_0, TCar2_1, TCar2_2, TCar2_3;
-    Texture TCar3_0, TCar3_1, TCar3_2, TCar3_3;
-    Texture TCar4_0, TCar4_1, TCar4_2, TCar4_3;
-    Texture TCar5_0, TCar5_1, TCar5_2, TCar5_3;
+    Texture TCar2_0, TCar2_1;
+    Texture TCar3_0;
+    Texture TCar4_0;
+    Texture TCar5_0;
 
     // Other application parameters
     int currCarModel = 0;
     int NumCars = 5;
+	int currPipeShader = 0;
+	int NumShaders = 3;
     glm::mat4 ViewPrj;
     glm::vec3 Pos = glm::vec3(6.0f,1.0f,10.0f); // Initial spawn location
     glm::vec3 PrevPos = Pos;
@@ -185,7 +187,9 @@ class Dealership : public BaseProject {
                 });
 
         // Pipelines [Shader couples]
-        PCar1.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1ShaderFrag.spv", {&DSLGubo, &DSLCar1});
+        PCar1_0.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1BlinnShaderFrag.spv", {&DSLGubo, &DSLCar1});
+	    PCar1_1.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1PhongShaderFrag.spv", {&DSLGubo, &DSLCar1});
+	    PCar1_2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1GGXShaderFrag.spv", {&DSLGubo, &DSLCar1});
         PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
         PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/CarShaderFrag.spv", {&DSLGubo, &DSLCar});
 
@@ -260,7 +264,9 @@ class Dealership : public BaseProject {
     void pipelinesAndDescriptorSetsInit() override {
         // This creates a new pipeline (with the current surface), using its shaders
         PMesh.create();
-        PCar1.create();
+        PCar1_0.create();
+	    PCar1_1.create();
+	    PCar1_2.create();
         PCar2.create();
         PCar.create();
 		PDoor.create();
@@ -351,8 +357,10 @@ class Dealership : public BaseProject {
     void pipelinesAndDescriptorSetsCleanup() override {
         // Cleanup pipelines
         PMesh.cleanup();
-        PCar1.cleanup();
-        PCar2.cleanup();
+        PCar1_0.cleanup();
+	    PCar1_1.cleanup();
+	    PCar1_2.cleanup();
+		PCar2.cleanup();
         PCar.cleanup();
 		PDoor.cleanup();
 		PShow.cleanup();
@@ -434,7 +442,9 @@ class Dealership : public BaseProject {
         
         // Destroys the pipelines
         PMesh.destroy();
-        PCar1.destroy();
+        PCar1_0.destroy();
+	    PCar1_1.destroy();
+	    PCar1_2.destroy();
         PCar2.destroy();
         PCar.destroy();
 		PDoor.destroy();
@@ -485,10 +495,26 @@ class Dealership : public BaseProject {
 
         switch(currCarModel) {
             case 0:
-                PCar1.bind(commandBuffer);
-                DSGubo.bind(commandBuffer, PCar1, 0, currentImage);
-                MCar1.bind(commandBuffer);
-                DSCar1.bind(commandBuffer, PCar1, 1, currentImage);
+				switch(currPipeShader){
+					case 0:
+		                PCar1_0.bind(commandBuffer);
+		                DSGubo.bind(commandBuffer, PCar1_0, 0, currentImage);
+		                MCar1.bind(commandBuffer);
+		                DSCar1.bind(commandBuffer, PCar1_0, 1, currentImage);
+						break;
+					case 1:
+						PCar1_1.bind(commandBuffer);
+						DSGubo.bind(commandBuffer, PCar1_1, 0, currentImage);
+						MCar1.bind(commandBuffer);
+						DSCar1.bind(commandBuffer, PCar1_1, 1, currentImage);
+						break;
+					case 2:
+						PCar1_2.bind(commandBuffer);
+						DSGubo.bind(commandBuffer, PCar1_2, 0, currentImage);
+						MCar1.bind(commandBuffer);
+						DSCar1.bind(commandBuffer, PCar1_2, 1, currentImage);
+						break;
+				}
                 vkCmdDrawIndexed(commandBuffer,
                                  static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
                 break;
@@ -615,6 +641,20 @@ class Dealership : public BaseProject {
         ViewPrj = Prj * View;
     }
 
+	static void PrintShader(int value){
+		switch (value){
+			case 0:
+				std::cout << "Shader: Blinn \n";
+				break;
+			case 1:
+				std::cout << "Shader: Phong \n";
+				break;
+			case 2:
+				std::cout << "Shader: GGX \n";
+				break;
+		}
+	}
+
     // Here is where you update the uniforms.
     // Very likely this will be where you will be writing the logic of your application.
     void updateUniformBuffer(uint32_t currentImage) override {
@@ -643,7 +683,7 @@ class Dealership : public BaseProject {
 		auto targetPoint = glm::vec3(6.0f, 1.0f, 6.0f); // Target point in the center
 
 		for (int i = 0; i < MAX_LIGHTS; i++) {
-			float angle = i * (2 * glm::pi<float>()) / MAX_LIGHTS; // Calculate the angle for each light
+			float angle = (float)i * (2 * glm::pi<float>()) / MAX_LIGHTS; // Calculate the angle for each light
 			gub.pointLights[i].lightPos = circleCenter + glm::vec3(radius * cos(angle), 0.0f, radius * sin(angle));
 		}
 
@@ -682,6 +722,40 @@ class Dealership : public BaseProject {
                 curDebounce = 0;
             }
         }
+
+		// Switch shader version for car 1 on specific key press
+		if (currCarModel == 0) {
+		    if(glfwGetKey(window, GLFW_KEY_X)) {
+			    if(!debounce) {
+				    debounce = true;
+				    curDebounce = GLFW_KEY_X;
+				    currPipeShader = (currPipeShader+1 == NumShaders) ? 0 : currPipeShader+1;
+				    PrintShader(currPipeShader);
+					//std::cout << "Shader : " << currPipeShader << "\n";
+				    RebuildPipeline();
+			    }
+		    } else {
+			    if((curDebounce == GLFW_KEY_X) && debounce) {
+				    debounce = false;
+				    curDebounce = 0;
+			    }
+		    }
+		    if(glfwGetKey(window, GLFW_KEY_Z)) {
+			    if(!debounce) {
+				    debounce = true;
+				    curDebounce = GLFW_KEY_Z;
+				    currPipeShader = (currPipeShader-1 < 0) ? NumShaders-1 : currPipeShader-1;
+				    PrintShader(currPipeShader);
+				    //std::cout << "Shader : " << currPipeShader << "\n";
+				    RebuildPipeline();
+			    }
+		    } else {
+			    if((curDebounce == GLFW_KEY_Z) && debounce) {
+				    debounce = false;
+				    curDebounce = 0;
+			    }
+		    }
+		}
 
         // Hold SHIFT to run
         if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT)) {
