@@ -90,6 +90,7 @@ class Dealership : public BaseProject {
     int NumCars = 5;
 	int currPipeShader = 0;
 	int NumShaders = 3;
+	int currLightSetup = 0, NumLightSetup = 3;
     glm::mat4 ViewPrj;
     glm::vec3 Pos = glm::vec3(6.0f,1.0f,10.0f); // Initial spawn location
     glm::vec3 PrevPos = Pos;
@@ -674,6 +675,11 @@ class Dealership : public BaseProject {
         static auto lightPosOld = lightPos;
         static auto colorOld = glm::vec3(colorX, colorY, colorZ);
 
+		
+
+		
+/*<<<<<<< Updated upstream
+
 		gub.pointLights[0].lightColor = glm::vec4(glm::vec3(1.0f, 10.0f, 1.0f), 1.0f);
 		gub.pointLights[1].lightColor = glm::vec4(glm::vec3(1.0f, 1.0f, 10.0f), 1.0f);
 		gub.pointLights[2].lightColor = glm::vec4(glm::vec3(10.0f, 1.0f, 1.0f), 1.0f);
@@ -686,6 +692,8 @@ class Dealership : public BaseProject {
 			float angle = (float)i * (2 * glm::pi<float>()) / MAX_LIGHTS; // Calculate the angle for each light
 			gub.pointLights[i].lightPos = circleCenter + glm::vec3(radius * cos(angle), 0.0f, radius * sin(angle));
 		}
+=======*/
+		auto targetPoint = glm::vec3(6.0f, 1.0f, 6.0f); // Target point in the center (for the light 
 
         // Key press parameters
         static bool debounce = false;
@@ -998,10 +1006,19 @@ class Dealership : public BaseProject {
         // Mapping of the sphere
         DSSphere.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
+		//Mapping spotlights
 	    mubSpotlight.amb = 1.0f;
 	    mubSpotlight.gamma = 1000.0f;
 	    mubSpotlight.sColor = 0.9f * glm::vec3(1.0f);
-
+		//positioning spotlights
+		const float radius = 4.0f; // Radius of the circle 
+		auto circleCenter = glm::vec3(6.0f, 5.5f, 6.0f); // Center position of the circle
+		//Location
+		for (int i = 0; i < MAX_LIGHTS; i++) {
+			float angle = i * (2 * glm::pi<float>()) / MAX_LIGHTS; // Calculate the angle for each light
+			gub.pointLights[i].lightPos = circleCenter + glm::vec3(radius * cos(angle), 0.0f, radius * sin(angle));
+		}
+		//Rotation
 		for (int i = 0; i < MAX_LIGHTS; i++) {
 			glm::vec3 direction = -glm::normalize(targetPoint - gub.pointLights[i].lightPos); // Calculate the direction towards the target point
 			glm::vec3 up = glm::vec3(0, -1, -1.1f); // Define the up direction
@@ -1013,27 +1030,121 @@ class Dealership : public BaseProject {
 			mubSpotlight.nMat = glm::inverse(glm::transpose(mubSpotlight.mMat));
 			DSSpotlight[i].map((int)currentImage, &mubSpotlight, sizeof(mubSpotlight), 0);
 		}
-		//to test gamma **************************REMOVE********
-	    static float gamma = 1000.0f;
-		if (glfwGetKey(window, GLFW_KEY_KP_4)) {
+
+		//Spotlight parameters setting  (color, gamma, Ms_factor)
+		static float gamma = 500.0f;
+		static float Ms_factor = 5.0f;
+		//Press B to go to the next spotlight scene setting
+		if (glfwGetKey(window, GLFW_KEY_B)) {
+			if (!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_B;
+				currLightSetup = (currLightSetup + 1 == NumLightSetup) ? 0 : currLightSetup + 1;
+				switch (currLightSetup) {
+				case 0:
+					gamma = 500.0f;
+					Ms_factor = 5.0f;
+					std::cout << "Light setup: BICOLOR, gamma = 500.0, Ms_factor = 5.0\n";
+					break;
+				case 1:
+					gamma = 150.0f;
+					Ms_factor = 190.0f;
+					std::cout << "Light setup: MULTICOLOR, gamma = 150.0, Ms_factor = 190.0\n";
+					break;
+				case 2:
+					gamma = 1000.0f;
+					Ms_factor = 20.0f;
+					std::cout << "Light setup: MONOCOLOR, gamma = 1000.0, Ms_factor = 20.0\n";
+					break;
+				default:
+					break;
+				}
+				RebuildPipeline();
+			}
+		}
+		else {
+			if ((curDebounce == GLFW_KEY_B) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
+		//Press V to go to the previous spotlight scene setting
+		if (glfwGetKey(window, GLFW_KEY_V)) {
+			if (!debounce) {
+				debounce = true;
+				curDebounce = GLFW_KEY_V;
+				currLightSetup = (currLightSetup - 1 < 0) ? NumLightSetup - 1 : currLightSetup - 1;
+				switch (currLightSetup) {
+				case 0:
+					gamma = 500.0f;
+					Ms_factor = 5.0f;
+					std::cout << "Light setup: BICOLOR, gamma = 500.0, Ms_factor = 5.0\n";
+					break;
+				case 1:
+					gamma = 150.0f;
+					Ms_factor = 190.0f;
+					std::cout << "Light setup: MULTICOLOR, gamma = 150.0, Ms_factor = 190.0\n";
+					break;
+				case 2:
+					gamma = 1000.0f;
+					Ms_factor = 20.0f;
+					std::cout << "Light setup: MONOCOLOR, gamma = 1000.0, Ms_factor = 20.0\n";
+					break;
+				default:
+					break;
+				}
+				RebuildPipeline();
+			}
+		}
+		else {
+			if ((curDebounce == GLFW_KEY_V) && debounce) {
+				debounce = false;
+				curDebounce = 0;
+			}
+		}
+		//Spotlights colors setting
+		switch (currLightSetup) {
+			case 0:
+				gub.pointLights[0].lightColor = glm::vec4(glm::vec3(1.0f, 1.0f, 0.0f), 1.0f);
+				gub.pointLights[1].lightColor = glm::vec4(glm::vec3(0.0f, 0.0f, 1.0f), 1.0f);
+				gub.pointLights[2].lightColor = glm::vec4(glm::vec3(1.0f, 1.0f, 0.0f), 1.0f);
+				gub.pointLights[3].lightColor = glm::vec4(glm::vec3(0.0f, 0.0f, 1.0f), 1.0f);
+				break;
+			case 1:
+				gub.pointLights[0].lightColor = glm::vec4(glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
+				gub.pointLights[1].lightColor = glm::vec4(glm::vec3(0.0f, 1.0f, 1.0f), 1.0f);
+				gub.pointLights[2].lightColor = glm::vec4(glm::vec3(1.0f, 0.0f, 1.0f), 1.0f);
+				gub.pointLights[3].lightColor = glm::vec4(glm::vec3(1.0f, 0.5f, 0.0f), 1.0f);
+				break;
+			case 2:
+				gub.pointLights[0].lightColor = glm::vec4(glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
+				gub.pointLights[1].lightColor = glm::vec4(glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
+				gub.pointLights[2].lightColor = glm::vec4(glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
+				gub.pointLights[3].lightColor = glm::vec4(glm::vec3(1.0f, 0.0f, 0.0f), 1.0f);
+				break;
+			default:
+				break;
+		}		
+		
+		//Manual tuning of gamma parameter (press 2 to increase, press 1 to decrease)
+		if (glfwGetKey(window, GLFW_KEY_2)) {
 			gamma = gamma + 1.0f;
 			std::cout << "gamma= "<< gamma << std::endl;
 		}
-		if (glfwGetKey(window, GLFW_KEY_KP_1)) {
-			gamma = glm::max(gamma - 1.0f, 0.0f);
+		if (glfwGetKey(window, GLFW_KEY_1)) {
+			gamma = glm::max(gamma - 1.0f, 0.1f);
 			std::cout << "gamma= " << gamma << std::endl;
 		}
-		//to test metallic factor 
-		static float Ms_factor = 0.9f;
-		if (glfwGetKey(window, GLFW_KEY_KP_5)) {
+		//Manual tuning of specular factor parameter (press 4 to increase, press 3 to decrease)
+		if (glfwGetKey(window, GLFW_KEY_4)) {
 			Ms_factor = Ms_factor + 1.0f;
 			std::cout << "Ms_factor= "<< Ms_factor << std::endl;
 		}
-		if (glfwGetKey(window, GLFW_KEY_KP_2)) {
-			Ms_factor = glm::max(Ms_factor - 1.0f, 0.0f);
+		if (glfwGetKey(window, GLFW_KEY_3)) {
+			Ms_factor = glm::max(Ms_factor - 1.0f, 0.1f);
 			std::cout << "Ms_factor= " << Ms_factor << std::endl;
 		}
-		//*********************************************************
+
         switch(currCarModel) {
             case 0:
                 mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
