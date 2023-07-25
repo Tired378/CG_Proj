@@ -13,8 +13,12 @@
 #define MAX_LIGHTS 4
 
 struct PointLight {
-	alignas(16) glm::vec3 lightPos;
-	alignas(16) glm::vec4 lightColor; //rgb + intensity
+    alignas(16) glm::vec3 lightPos;
+    alignas(16) glm::vec4 lightColor; //rgb + intensity
+};
+
+struct OverlayUniformBlock {
+    alignas(4) float visible;
 };
 
 struct MeshUniformBlock {
@@ -32,14 +36,19 @@ struct GlobalUniformBlock {
     alignas(16) glm::vec3 DlightColor;
     alignas(16) glm::vec3 AmbLightColor;
     alignas(16) glm::vec3 eyePos;
-	PointLight pointLights[MAX_LIGHTS];
+    PointLight pointLights[MAX_LIGHTS];
 };
 
 struct VertexMesh {
     alignas(16) glm::vec3 pos;
     alignas(16) glm::vec3 norm;
     alignas(8) glm::vec2 UV;
-	alignas(16) glm::vec4 tan;
+    alignas(16) glm::vec4 tan;
+};
+
+struct VertexOverlay {
+    glm::vec2 pos;
+    glm::vec2 UV;
 };
 
 // MAIN !
@@ -51,30 +60,37 @@ class Dealership : public BaseProject {
 
     // Descriptor Layouts ["classes" of what will be passed to the shaders]
     DescriptorSetLayout DSLGubo, DSLEnv;
-    DescriptorSetLayout DSLCar, DSLCar1, DSLCar2, DSLSpotlight;
+    DescriptorSetLayout DSLCar, DSLCar1, DSLCar2, DSLSpotlight, DSLOverlay;
 
     // Vertex formats
     VertexDescriptor VMesh;
+    VertexDescriptor VOverlay;
 
     // Pipelines [Shader couples]
     Pipeline PMesh, PShow, PDoor, PSpotlight;
 	Pipeline PCar1_0, PCar1_1, PCar1_2, PCar2, PCar;
+    Pipeline POverlay;
 
 	// Descriptors
     DescriptorSet DSEnv, DSShow, DSGubo, DSDoor, DSSphere, DSSpotlight[MAX_LIGHTS];
     DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
+    DescriptorSet DSCommands, DSOCar1, DSOCar2, DSOCar3, DSOCar4, DSOCar5;
 
     // Models
     Model<VertexMesh> MEnv, MShow, MSphere, MDoor, MSpotlight[MAX_LIGHTS];
     Model<VertexMesh> MCar1, MCar2, MCar3, MCar4, MCar5;
+    Model<VertexOverlay> Commands, OCar1, OCar2, OCar3, OCar4, OCar5;
 
     // Uniform variables
 	MeshUniformBlock mubCar, mubEnv, mubSpotlight;
+
     GlobalUniformBlock gub;
+    OverlayUniformBlock uboCommands, uboOCar1, uboOCar2, uboOCar3, uboOCar4, uboOCar5;
 
 	// Textures
     Texture TEnv, TEnv_1, TEnv_2;
     Texture TDoor, TDoor_1, TDoor_2;
+
 	Texture TSphere;
     Texture TSpotlight_0, TSpotlight_1, TSpotlight_2, TSpotlight_3;
     Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
@@ -82,6 +98,7 @@ class Dealership : public BaseProject {
     Texture TCar3_0;
     Texture TCar4_0;
     Texture TCar5_0;
+    Texture TCommands, TOCar1, TOCar2, TOCar3, TOCar4, TOCar5;
 
     // Other application parameters
     int currCarModel = 0, currPipeShader = 0, currLightSetup = 0;
@@ -99,6 +116,7 @@ class Dealership : public BaseProject {
     // Showcase platform parameters
     const float ShowRotSpeed = glm::radians(-5.0f);
     float ShowRot = 0.0f;
+    int OCarVisible = 0.0f;
 
     // Here you set the main application parameters
     void setWindowParameters() override {
@@ -112,9 +130,9 @@ class Dealership : public BaseProject {
         // Descriptor pool sizes
         /* Dealership */
         /* Update the requirements for the size of the pool */
-        uniformBlocksInPool = 28;
-        texturesInPool = 37;
-        setsInPool = 28;
+        uniformBlocksInPool = 34;
+        texturesInPool = 43;
+        setsInPool = 34;
         
         Ar = (float)windowWidth / (float)windowHeight;
     }
@@ -128,6 +146,12 @@ class Dealership : public BaseProject {
     // Here you also create your Descriptor set layouts and load the shaders for the pipelines
     void localInit() override {
         // Descriptor Layouts [what will be passed to the shaders]
+        
+        DSLOverlay.init(this, {
+                    {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+                    {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+                });
+        
         DSLCar.init(this, {
                     {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
                     {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
@@ -154,13 +178,13 @@ class Dealership : public BaseProject {
                     {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
                 });
 
-		DSLSpotlight.init(this, {
-					{0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
-					{1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
-					{4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
-			});
+        DSLSpotlight.init(this, {
+                    {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS},
+                    {1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT},
+                    {4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, VK_SHADER_STAGE_FRAGMENT_BIT}
+            });
 
         DSLGubo.init(this, {
                     {0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_SHADER_STAGE_ALL_GRAPHICS}
@@ -176,9 +200,18 @@ class Dealership : public BaseProject {
                   {0, 1, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, norm),
                          sizeof(glm::vec3), NORMAL},
                   {0, 2, VK_FORMAT_R32G32B32_SFLOAT, offsetof(VertexMesh, tan),
-		                  sizeof(glm::vec4), TANGENT},
+                          sizeof(glm::vec4), TANGENT},
                   {0, 3, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexMesh, UV),
                          sizeof(glm::vec2), UV},
+                });
+        
+        VOverlay.init(this, {
+                  {0, sizeof(VertexOverlay), VK_VERTEX_INPUT_RATE_VERTEX}
+                }, {
+                  {0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, pos),
+                         sizeof(glm::vec2), OTHER},
+                  {0, 1, VK_FORMAT_R32G32_SFLOAT, offsetof(VertexOverlay, UV),
+                         sizeof(glm::vec2), UV}
                 });
 
         // Pipelines [Shader couples]
@@ -187,17 +220,20 @@ class Dealership : public BaseProject {
 	    PCar1_2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1GGXShaderFrag.spv", {&DSLGubo, &DSLCar1});
         PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
         PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/CarShaderFrag.spv", {&DSLGubo, &DSLCar});
+        POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
+        POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
+                                     VK_CULL_MODE_NONE, false);
 
 	    PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLEnv});
         PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
-	    PShow.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/ShowFrag.spv", {&DSLGubo, &DSLEnv});
-	    PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
+        PShow.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/ShowFrag.spv", {&DSLGubo, &DSLEnv});
+        PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
 
-	    PDoor.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/DoorFrag.spv", {&DSLGubo, &DSLEnv});
+        PDoor.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/DoorFrag.spv", {&DSLGubo, &DSLEnv});
 
-		PSpotlight.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/SpotlightShaderFrag.spv", {&DSLGubo, &DSLSpotlight});
+        PSpotlight.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/SpotlightShaderFrag.spv", {&DSLGubo, &DSLSpotlight});
 
         /* Models */
         createEnvMesh(MEnv.vertices, MEnv.indices);
@@ -217,11 +253,44 @@ class Dealership : public BaseProject {
 
         MDoor.init(this, &VMesh, "models/door/door.gltf", GLTF);
 
-		for (auto & i : MSpotlight)
-		{
-			i.init(this, &VMesh, "models/Spotlight.obj", OBJ);
-		}
-		
+        for (auto & i : MSpotlight)
+        {
+            i.init(this, &VMesh, "models/Spotlight.obj", OBJ);
+        }
+        
+        Commands.vertices = {{{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
+                         {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}}};
+//        Commands.vertices = {{{-0.8f, -0.55f}, {0.0f,0.0f}}, {{-0.8f, 0.25f}, {0.0f,1.0f}},
+//                         {{ 0.8f, -0.55f}, {1.0f,0.0f}}, {{ 0.8f, 0.25f}, {1.0f,1.0f}}};
+        Commands.indices = {0, 1, 2,    1, 2, 3};
+        Commands.initMesh(this, &VOverlay);
+        
+        OCar1.vertices = {{{-0.8f, -0.55f}, {0.0f,0.0f}}, {{-0.8f, 0.25f}, {0.0f,1.0f}},
+                         {{ 0.8f, -0.55f}, {1.0f,0.0f}}, {{ 0.8f, 0.25f}, {1.0f,1.0f}}};
+        OCar1.indices = {0, 1, 2,    1, 2, 3};
+        OCar1.initMesh(this, &VOverlay);
+        
+        OCar2.vertices = {{{-0.8f, -0.55f}, {0.0f,0.0f}}, {{-0.8f, 0.25f}, {0.0f,1.0f}},
+                         {{ 0.8f, -0.55f}, {1.0f,0.0f}}, {{ 0.8f, 0.25f}, {1.0f,1.0f}}};
+        OCar2.indices = {0, 1, 2,    1, 2, 3};
+        OCar2.initMesh(this, &VOverlay);
+        
+        OCar3.vertices = {{{-0.8f, -0.55f}, {0.0f,0.0f}}, {{-0.8f, 0.25f}, {0.0f,1.0f}},
+                         {{ 0.8f, -0.55f}, {1.0f,0.0f}}, {{ 0.8f, 0.25f}, {1.0f,1.0f}}};
+        OCar3.indices = {0, 1, 2,    1, 2, 3};
+        OCar3.initMesh(this, &VOverlay);
+        
+        OCar4.vertices = {{{-0.8f, -0.55f}, {0.0f,0.0f}}, {{-0.8f, 0.25f}, {0.0f,1.0f}},
+                         {{ 0.8f, -0.55f}, {1.0f,0.0f}}, {{ 0.8f, 0.25f}, {1.0f,1.0f}}};
+        OCar4.indices = {0, 1, 2,    1, 2, 3};
+        OCar4.initMesh(this, &VOverlay);
+        
+        OCar5.vertices = {{{-0.8f, -0.55f}, {0.0f,0.0f}}, {{-0.8f, 0.25f}, {0.0f,1.0f}},
+                         {{ 0.8f, -0.55f}, {1.0f,0.0f}}, {{ 0.8f, 0.25f}, {1.0f,1.0f}}};
+        OCar5.indices = {0, 1, 2,    1, 2, 3};
+        OCar5.initMesh(this, &VOverlay);
+        
+        
         /* Textures */
         TCar1_0.init(this, "textures/Car1/cb_car_baseColor.png");
         TCar1_1.init(this, "textures/Car1/cb_car_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
@@ -237,7 +306,7 @@ class Dealership : public BaseProject {
 
         TCar5_0.init(this, "textures/Car5/baseColor.png");
 
-		TSpotlight_0.init(this, "textures/Spotlight/baseColor.png");
+        TSpotlight_0.init(this, "textures/Spotlight/baseColor.png");
         TSpotlight_1.init(this, "textures/Spotlight/normal.png", VK_FORMAT_R8G8B8A8_UNORM);
         TSpotlight_2.init(this, "textures/Spotlight/roughness.png", VK_FORMAT_R8G8B8A8_UNORM);
         TSpotlight_3.init(this, "textures/Spotlight/emission.png", VK_FORMAT_R8G8B8A8_UNORM);
@@ -250,7 +319,14 @@ class Dealership : public BaseProject {
         TDoor_1.init(this, "textures/door/Door_normal.png", VK_FORMAT_R8G8B8A8_UNORM);
         TDoor_2.init(this, "textures/door/Door_metallicRoughness.png", VK_FORMAT_R8G8B8A8_UNORM);
 
-		TSphere.init(this, "textures/TextureSphere.png");
+        TSphere.init(this, "textures/TextureSphere.png");
+        
+        TCommands.init(this, "textures/PressSpace.png");
+        TOCar1.init(this, "textures/COverlay1.png");
+        TOCar2.init(this, "textures/COverlay2.png");
+        TOCar3.init(this, "textures/COverlay3.png");
+        TOCar4.init(this, "textures/COverlay4.png");
+        TOCar5.init(this, "textures/COverlay5.png");
     }
     
     // Here you create your pipelines and Descriptor Sets!
@@ -262,9 +338,10 @@ class Dealership : public BaseProject {
 	    PCar1_2.create();
         PCar2.create();
         PCar.create();
-		PDoor.create();
-		PShow.create();
+        PDoor.create();
+        PShow.create();
         PSpotlight.create();
+        POverlay.create();
 
         // Descriptor sets init
         DSEnv.init(this, &DSLEnv, {
@@ -273,6 +350,36 @@ class Dealership : public BaseProject {
                 {2, TEXTURE, 0, &TEnv_1},
                 {3, TEXTURE, 0, &TEnv_2}
         });
+        
+        DSCommands.init(this, &DSLOverlay, {
+                    {0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TCommands}
+                });
+        
+        DSOCar1.init(this, &DSLOverlay, {
+                    {0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TOCar1}
+                });
+        
+        DSOCar2.init(this, &DSLOverlay, {
+                    {0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TOCar2}
+                });
+        
+        DSOCar3.init(this, &DSLOverlay, {
+                    {0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TOCar3}
+                });
+        
+        DSOCar4.init(this, &DSLOverlay, {
+                    {0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TOCar4}
+                });
+        
+        DSOCar5.init(this, &DSLOverlay, {
+                    {0, UNIFORM, sizeof(OverlayUniformBlock), nullptr},
+                    {1, TEXTURE, 0, &TOCar5}
+                });
 
         DSShow.init(this, &DSLEnv, {
                 {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -295,16 +402,16 @@ class Dealership : public BaseProject {
                 {3, TEXTURE, 0, &TSphere}
         });
 
-		for (auto & i : DSSpotlight)
-		{
-			i.init(this, &DSLSpotlight, {
-				{0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
-				{1, TEXTURE, 0, &TSpotlight_0},
-				{2, TEXTURE, 0, &TSpotlight_1},
-				{3, TEXTURE, 0, &TSpotlight_2},
-				{4, TEXTURE, 0, &TSpotlight_3},
-			});
-		}
+        for (auto & i : DSSpotlight)
+        {
+            i.init(this, &DSLSpotlight, {
+                {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
+                {1, TEXTURE, 0, &TSpotlight_0},
+                {2, TEXTURE, 0, &TSpotlight_1},
+                {3, TEXTURE, 0, &TSpotlight_2},
+                {4, TEXTURE, 0, &TSpotlight_3},
+            });
+        }
 
         DSCar1.init(this, &DSLCar1, {
                     {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
@@ -355,9 +462,10 @@ class Dealership : public BaseProject {
 	    PCar1_2.cleanup();
 		PCar2.cleanup();
         PCar.cleanup();
-		PDoor.cleanup();
-		PShow.cleanup();
+        PDoor.cleanup();
+        PShow.cleanup();
         PSpotlight.cleanup();
+        POverlay.cleanup();
 
         DSCar1.cleanup();
         DSCar2.cleanup();
@@ -369,10 +477,16 @@ class Dealership : public BaseProject {
         DSEnv.cleanup();
         DSShow.cleanup();
         DSSphere.cleanup();
-		for (auto & i : DSSpotlight)
-		{
-			i.cleanup();
-		}
+        DSCommands.cleanup();
+        DSOCar1.cleanup();
+        DSOCar2.cleanup();
+        DSOCar3.cleanup();
+        DSOCar4.cleanup();
+        DSOCar5.cleanup();
+        for (auto & i : DSSpotlight)
+        {
+            i.cleanup();
+        }
     }
 
     // Here you destroy all the Models, Texture and Desc. Set Layouts you created!
@@ -381,6 +495,13 @@ class Dealership : public BaseProject {
     // methods: .cleanup() recreates them, while .destroy() delete them completely
     void localCleanup() override {
         // Cleanup textures
+        Commands.cleanup();
+        OCar1.cleanup();
+        OCar2.cleanup();
+        OCar3.cleanup();
+        OCar4.cleanup();
+        OCar5.cleanup();
+        
         TCar1_0.cleanup();
         TCar1_1.cleanup();
         TCar1_2.cleanup();
@@ -408,7 +529,14 @@ class Dealership : public BaseProject {
         TDoor_1.cleanup();
         TDoor_2.cleanup();
 
-	    TSphere.cleanup();
+        TSphere.cleanup();
+        
+        TCommands.cleanup();
+        TOCar1.cleanup();
+        TOCar2.cleanup();
+        TOCar3.cleanup();
+        TOCar4.cleanup();
+        TOCar5.cleanup();
 
         // Cleanup models
         MCar1.cleanup();
@@ -420,10 +548,10 @@ class Dealership : public BaseProject {
         MShow.cleanup();
         MDoor.cleanup();
         MSphere.cleanup();
-		for (auto & i : MSpotlight)
-		{
-			i.cleanup();
-		}
+        for (auto & i : MSpotlight)
+        {
+            i.cleanup();
+        }
 
         // Cleanup descriptor set layouts
         DSLCar1.cleanup();
@@ -440,16 +568,48 @@ class Dealership : public BaseProject {
 	    PCar1_2.destroy();
         PCar2.destroy();
         PCar.destroy();
-		PDoor.destroy();
-		PShow.destroy();
+        PDoor.destroy();
+        PShow.destroy();
         PSpotlight.destroy();
+        POverlay.destroy();
     }
     
     // Here it is the creation of the command buffer:
     // You send to the GPU all the objects you want to draw,
     // with their buffers and textures
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
-
+        
+        Commands.bind(commandBuffer);
+        POverlay.bind(commandBuffer);
+        DSCommands.bind(commandBuffer, POverlay, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                static_cast<uint32_t>(Commands.indices.size()), 1, 0, 0, 0);
+        
+        OCar1.bind(commandBuffer);
+        DSOCar1.bind(commandBuffer, POverlay, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                static_cast<uint32_t>(OCar1.indices.size()), 1, 0, 0, 0);
+        
+        OCar2.bind(commandBuffer);
+        DSOCar2.bind(commandBuffer, POverlay, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                static_cast<uint32_t>(OCar2.indices.size()), 1, 0, 0, 0);
+        
+        OCar3.bind(commandBuffer);
+        DSOCar3.bind(commandBuffer, POverlay, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                static_cast<uint32_t>(OCar3.indices.size()), 1, 0, 0, 0);
+        
+        OCar4.bind(commandBuffer);
+        DSOCar4.bind(commandBuffer, POverlay, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                static_cast<uint32_t>(OCar4.indices.size()), 1, 0, 0, 0);
+        
+        OCar5.bind(commandBuffer);
+        DSOCar5.bind(commandBuffer, POverlay, 0, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                static_cast<uint32_t>(OCar5.indices.size()), 1, 0, 0, 0);
+        
         PMesh.bind(commandBuffer);
 
         DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
@@ -459,7 +619,7 @@ class Dealership : public BaseProject {
         vkCmdDrawIndexed(commandBuffer,
                 static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
 
-		PShow.bind(commandBuffer);
+        PShow.bind(commandBuffer);
         MShow.bind(commandBuffer);
         DSShow.bind(commandBuffer, PShow, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
@@ -470,21 +630,22 @@ class Dealership : public BaseProject {
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MSphere.indices.size()), 1, 0, 0, 0);
 
-		PDoor.bind(commandBuffer);
+        PDoor.bind(commandBuffer);
         MDoor.bind(commandBuffer);
         DSDoor.bind(commandBuffer, PDoor, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
             static_cast<uint32_t>(MDoor.indices.size()), 1, 0, 0, 0);
 
-		PSpotlight.bind(commandBuffer);
-		DSGubo.bind(commandBuffer, PSpotlight, 0, currentImage);
-		for (int i = 0; i < MAX_LIGHTS; i++)
-		{
-			MSpotlight[i].bind(commandBuffer);		
-			DSSpotlight[i].bind(commandBuffer, PSpotlight, 1, currentImage);
-			vkCmdDrawIndexed(commandBuffer,
-				static_cast<uint32_t>(MSpotlight[i].indices.size()), 1, 0, 0, 0);
-		}
+        PSpotlight.bind(commandBuffer);
+        DSGubo.bind(commandBuffer, PSpotlight, 0, currentImage);
+        for (int i = 0; i < MAX_LIGHTS; i++)
+        {
+            MSpotlight[i].bind(commandBuffer);
+            DSSpotlight[i].bind(commandBuffer, PSpotlight, 1, currentImage);
+            vkCmdDrawIndexed(commandBuffer,
+                static_cast<uint32_t>(MSpotlight[i].indices.size()), 1, 0, 0, 0);
+        }
+        
 
         switch(currCarModel) {
             case 0:
@@ -681,6 +842,12 @@ class Dealership : public BaseProject {
                 curDebounce = GLFW_KEY_N;
                 currCarModel = (currCarModel+1 == NumCars) ? 0 : currCarModel+1;
                 std::cout << "Scene : " << currCarModel << "\n";
+                OCarVisible = 0;
+                uboOCar1.visible = OCarVisible;
+                uboOCar2.visible = OCarVisible;
+                uboOCar3.visible = OCarVisible;
+                uboOCar4.visible = OCarVisible;
+                uboOCar5.visible = OCarVisible;
                 RebuildPipeline();
             }
         } else {
@@ -695,6 +862,12 @@ class Dealership : public BaseProject {
                 curDebounce = GLFW_KEY_P;
                 currCarModel = (currCarModel-1 < 0) ? NumCars-1 : currCarModel-1;
                 std::cout << "Scene : " << currCarModel << "\n";
+                OCarVisible = 0;
+                uboOCar1.visible = OCarVisible;
+                uboOCar2.visible = OCarVisible;
+                uboOCar3.visible = OCarVisible;
+                uboOCar4.visible = OCarVisible;
+                uboOCar5.visible = OCarVisible;
                 RebuildPipeline();
             }
         } else {
@@ -932,11 +1105,11 @@ class Dealership : public BaseProject {
         gub.AmbLightColor = glm::vec3(0.2f);
         gub.eyePos = cameraPos;
 
-	    if (lightPosOld != lightPos) {
-		    std::cout << "lightPos = (" << lightPos.x << ", " << lightPos.y << ", " << lightPos.z << ")" << std::endl;
-		    std::cout << gub.DlightDir.x << " " << gub.DlightDir.y << " " << gub.DlightDir.z << std::endl;
-	    }
-	    lightPosOld = lightPos;
+        if (lightPosOld != lightPos) {
+            std::cout << "lightPos = (" << lightPos.x << ", " << lightPos.y << ", " << lightPos.z << ")" << std::endl;
+            std::cout << gub.DlightDir.x << " " << gub.DlightDir.y << " " << gub.DlightDir.z << std::endl;
+        }
+        lightPosOld = lightPos;
 
         DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
 
@@ -977,7 +1150,6 @@ class Dealership : public BaseProject {
         // Mapping of the sphere
         DSSphere.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
-
 		// Mapping spotlights
 	    mubSpotlight.amb = 1.0f;
 	    mubSpotlight.gamma = 1000.0f;
@@ -994,9 +1166,7 @@ class Dealership : public BaseProject {
 		for (int i = 0; i < MAX_LIGHTS; i++) {
 			glm::vec3 direction = -glm::normalize(targetPoint - gub.pointLights[i].lightPos); // Calculate the direction towards the target point
 			glm::vec3 up = glm::vec3(0, -1, -1.1f); // Define the up direction
-
-			glm::mat4 rotationMat = glm::lookAt(glm::vec3(0.0f), direction, up); // Create a rotation matrix based on the direction and up vectors
-
+            glm::mat4 rotationMat = glm::lookAt(glm::vec3(0.0f), direction, up); // Create a rotation matrix based on the direction and up vectors
 			mubSpotlight.mMat = glm::scale(glm::translate(glm::mat4(1.0f), gub.pointLights[i].lightPos) * rotationMat, glm::vec3(2));
 			mubSpotlight.mvpMat = ViewPrj * mubSpotlight.mMat;
 			mubSpotlight.nMat = glm::inverse(glm::transpose(mubSpotlight.mMat));
@@ -1156,7 +1326,7 @@ class Dealership : public BaseProject {
                 DSCar3.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 3:
-				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
+                mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
                 mubCar.mMat = glm::rotate(
                         glm::scale(
                         glm::rotate(
@@ -1180,12 +1350,57 @@ class Dealership : public BaseProject {
                 DSCar5.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
         }
+        
+        uboCommands.visible = 1.0f;
+        DSCommands.map(currentImage, &uboCommands, sizeof(uboCommands), 0);
+        
+        DSOCar1.map(currentImage, &uboOCar1, sizeof(uboOCar1), 0);
+        DSOCar2.map(currentImage, &uboOCar2, sizeof(uboOCar2), 0);
+        DSOCar3.map(currentImage, &uboOCar3, sizeof(uboOCar3), 0);
+        DSOCar4.map(currentImage, &uboOCar4, sizeof(uboOCar4), 0);
+        DSOCar5.map(currentImage, &uboOCar5, sizeof(uboOCar5), 0);
+        
+        
+        if(glfwGetKey(window, GLFW_KEY_F)) {
+            if (!debounce) {
+                debounce = true;
+                curDebounce = GLFW_KEY_F;
+                OCarVisible = (OCarVisible == 0.0f) ? 1.0f : 0.0f;
+                
+                switch(currCarModel){
+                    case 0:
+                        uboOCar1.visible = OCarVisible;
+                        break;
+                    case 1:
+                        uboOCar2.visible = OCarVisible;
+                        break;
+                    case 2:
+                        uboOCar3.visible = OCarVisible;
+                        break;
+                    case 3:
+                        uboOCar4.visible = OCarVisible;
+                        break;
+                    case 4:
+                        uboOCar5.visible = OCarVisible;
+                        break;
+                        
+                }
+            }
+            
+        } else {
+            if ((curDebounce == GLFW_KEY_F) && debounce) {
+                debounce = false;
+                curDebounce = 0;
+            }}
+        
+        
+        
     }
 
     static void createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
     static void createShowcaseMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
     static void createSphereMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
-	static void generate_tangents(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
+    static void generate_tangents(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
 };
 
 #include "Meshes.hpp"
