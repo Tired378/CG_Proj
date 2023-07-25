@@ -58,8 +58,6 @@ vec3 BRDF(vec3 V, vec3 N, vec3 L, vec3 Md, vec3 Ms, float gamma) {
 }
 
 void main() {
-    //vec3 N = normalize(fragNorm);				// surface normal
-    //vec3 N = normalize(texture(normMap, fragUV).xyz);			// surface normal
     vec3 Norm = normalize(fragNorm);
     vec3 Tan = normalize(fragTan.xyz - Norm * dot(fragTan.xyz, Norm));
     vec3 Bitan = cross(Norm, Tan) * fragTan.w;
@@ -74,33 +72,27 @@ void main() {
 
     vec4 MRAO = texture(matMap, fragUV);
     float roughness = MRAO.g;
-    float pex = ubo.gamma * (1.0 - roughness) * (1.0 - roughness); //ubo.gamma: 1000 default, low più satinato, high più lucido
+    float pex = ubo.gamma * (1.0 - roughness) * (1.0 - roughness);
     float ao = MRAO.b;
     float metallic = MRAO.r;
 
-    //Direct Light
-    //vec3 lightColor = gubo.DlightColor.rgb;
-    //Point Light
-    //vec3 lightColor = gubo.DlightColor.rgb * pow(g/length(gubo.DlightPos - fragPos), beta);
-    //Spot Light
     vec3 lightColor = gubo.DlightColor.rgb * pow(g/length(gubo.DlightPos - fragPos), beta) *
     clamp((dot(normalize(gubo.DlightPos - fragPos), gubo.DlightDir) - cosout)/(cosin-cosout), 0.0f, 1.0f);
 
     vec3 DiffSpec = BRDF(V, N, L, albedo, ubo.sColor * vec3(metallic), pex);
-    //**************
-    for (int i = 0; i < MAX_LIGHTS; i++) {
+
+    for (int i = 0; i < MAX_LIGHTS; i++) { // calculate spotlights reflection
         PointLight light = gubo.pointLights[i];
         vec3 L = light.position.xyz - fragPos;
         float attenuation = 1.0 / dot(L, L); // distance squared
         L = normalize(L);
 
         float cosAngIncidence = max(dot(N, L), 0.0f);
-        vec3 intensity = light.color.xyz * light.color.w * attenuation; //cambia l'attenuation per aumentare la luce diffusa
+        vec3 intensity = light.color.xyz * light.color.w * attenuation;
 
         DiffSpec += intensity * BRDF(V, N, L, albedo, ubo.sColor * vec3(metallic), pex);
     }
 
-    //****************************
     vec3 Ambient = albedo * gubo.AmbLightColor * ao * ubo.amb;
 
     vec3 emissionFactor = vec3(1.0f,1.0f,1.0f);
