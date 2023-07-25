@@ -85,12 +85,11 @@ class Dealership : public BaseProject {
 	MeshUniformBlock mubCar, mubEnv, mubSpotlight;
 
     GlobalUniformBlock gub;
-    OverlayUniformBlock uboCommands, uboOCar1, uboOCar2, uboOCar3, uboOCar4, uboOCar5;
+    OverlayUniformBlock uboCommands, uboOverCar;
 
 	// Textures
     Texture TEnv, TEnv_1, TEnv_2;
     Texture TDoor, TDoor_1, TDoor_2;
-
 	Texture TSphere;
     Texture TSpotlight_0, TSpotlight_1, TSpotlight_2, TSpotlight_3;
     Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
@@ -116,11 +115,11 @@ class Dealership : public BaseProject {
     // Showcase platform parameters
     const float ShowRotSpeed = glm::radians(-5.0f);
     float ShowRot = 0.0f;
-    int OCarVisible = 0.0f;
+    float OCarVisible = 0.0f;
 
     // Here you set the main application parameters
     void setWindowParameters() override {
-        // window size, title and initial background
+        // Window size, title and initial background
         windowWidth = 800;
         windowHeight = 600;
         windowTitle = "Car Dealership";
@@ -128,11 +127,9 @@ class Dealership : public BaseProject {
         initialBackgroundColor = {0.0f, 0.005f, 0.01f, 1.0f};
         
         // Descriptor pool sizes
-        /* Dealership */
-        /* Update the requirements for the size of the pool */
-        uniformBlocksInPool = 34;
+        uniformBlocksInPool = 20;
         texturesInPool = 43;
-        setsInPool = 34;
+        setsInPool = 20;
         
         Ar = (float)windowWidth / (float)windowHeight;
     }
@@ -220,16 +217,15 @@ class Dealership : public BaseProject {
 	    PCar1_2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car1GGXShaderFrag.spv", {&DSLGubo, &DSLCar1});
         PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
         PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/CarShaderFrag.spv", {&DSLGubo, &DSLCar});
-        POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
-        POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS_OR_EQUAL, VK_POLYGON_MODE_FILL,
-                                     VK_CULL_MODE_NONE, false);
+
+		POverlay.init(this, &VOverlay, "shaders/OverlayVert.spv", "shaders/OverlayFrag.spv", {&DSLOverlay});
+        POverlay.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
 	    PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLEnv});
         PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
         PShow.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/ShowFrag.spv", {&DSLGubo, &DSLEnv});
         PShow.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
-
 
         PDoor.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/DoorFrag.spv", {&DSLGubo, &DSLEnv});
 
@@ -560,6 +556,7 @@ class Dealership : public BaseProject {
         DSLGubo.cleanup();
         DSLEnv.cleanup();
         DSLSpotlight.cleanup();
+	    DSLOverlay.cleanup();
         
         // Destroys the pipelines
         PMesh.destroy();
@@ -579,37 +576,6 @@ class Dealership : public BaseProject {
     // with their buffers and textures
     void populateCommandBuffer(VkCommandBuffer commandBuffer, int currentImage) override {
         
-        Commands.bind(commandBuffer);
-        POverlay.bind(commandBuffer);
-        DSCommands.bind(commandBuffer, POverlay, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                static_cast<uint32_t>(Commands.indices.size()), 1, 0, 0, 0);
-        
-        OCar1.bind(commandBuffer);
-        DSOCar1.bind(commandBuffer, POverlay, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                static_cast<uint32_t>(OCar1.indices.size()), 1, 0, 0, 0);
-        
-        OCar2.bind(commandBuffer);
-        DSOCar2.bind(commandBuffer, POverlay, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                static_cast<uint32_t>(OCar2.indices.size()), 1, 0, 0, 0);
-        
-        OCar3.bind(commandBuffer);
-        DSOCar3.bind(commandBuffer, POverlay, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                static_cast<uint32_t>(OCar3.indices.size()), 1, 0, 0, 0);
-        
-        OCar4.bind(commandBuffer);
-        DSOCar4.bind(commandBuffer, POverlay, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                static_cast<uint32_t>(OCar4.indices.size()), 1, 0, 0, 0);
-        
-        OCar5.bind(commandBuffer);
-        DSOCar5.bind(commandBuffer, POverlay, 0, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                static_cast<uint32_t>(OCar5.indices.size()), 1, 0, 0, 0);
-        
         PMesh.bind(commandBuffer);
 
         DSGubo.bind(commandBuffer, PMesh, 0, currentImage);
@@ -619,16 +585,16 @@ class Dealership : public BaseProject {
         vkCmdDrawIndexed(commandBuffer,
                 static_cast<uint32_t>(MEnv.indices.size()), 1, 0, 0, 0);
 
+        MSphere.bind(commandBuffer);
+        DSSphere.bind(commandBuffer, PMesh, 1, currentImage);
+        vkCmdDrawIndexed(commandBuffer,
+                         static_cast<uint32_t>(MSphere.indices.size()), 1, 0, 0, 0);
+
         PShow.bind(commandBuffer);
         MShow.bind(commandBuffer);
         DSShow.bind(commandBuffer, PShow, 1, currentImage);
         vkCmdDrawIndexed(commandBuffer,
                          static_cast<uint32_t>(MShow.indices.size()), 1, 0, 0, 0);
-
-        MSphere.bind(commandBuffer);
-        DSSphere.bind(commandBuffer, PMesh, 1, currentImage);
-        vkCmdDrawIndexed(commandBuffer,
-                         static_cast<uint32_t>(MSphere.indices.size()), 1, 0, 0, 0);
 
         PDoor.bind(commandBuffer);
         MDoor.bind(commandBuffer);
@@ -645,7 +611,12 @@ class Dealership : public BaseProject {
             vkCmdDrawIndexed(commandBuffer,
                 static_cast<uint32_t>(MSpotlight[i].indices.size()), 1, 0, 0, 0);
         }
-        
+
+	    POverlay.bind(commandBuffer);
+	    Commands.bind(commandBuffer);
+	    DSCommands.bind(commandBuffer, POverlay, 0, currentImage);
+	    vkCmdDrawIndexed(commandBuffer,
+	                     static_cast<uint32_t>(Commands.indices.size()), 1, 0, 0, 0);
 
         switch(currCarModel) {
             case 0:
@@ -671,7 +642,13 @@ class Dealership : public BaseProject {
 				}
                 vkCmdDrawIndexed(commandBuffer,
                                  static_cast<uint32_t>(MCar1.indices.size()), 1, 0, 0, 0);
-                break;
+
+				POverlay.bind(commandBuffer);
+		        OCar1.bind(commandBuffer);
+		        DSOCar1.bind(commandBuffer, POverlay, 0, currentImage);
+		        vkCmdDrawIndexed(commandBuffer,
+		                         static_cast<uint32_t>(OCar1.indices.size()), 1, 0, 0, 0);
+				break;
             case 1:
                 PCar2.bind(commandBuffer);
                 DSGubo.bind(commandBuffer, PCar2, 0, currentImage);
@@ -679,7 +656,13 @@ class Dealership : public BaseProject {
                 DSCar2.bind(commandBuffer, PCar2, 1, currentImage);
                 vkCmdDrawIndexed(commandBuffer,
                                  static_cast<uint32_t>(MCar2.indices.size()), 1, 0, 0, 0);
-                break;
+
+				POverlay.bind(commandBuffer);
+		        OCar2.bind(commandBuffer);
+		        DSOCar2.bind(commandBuffer, POverlay, 0, currentImage);
+		        vkCmdDrawIndexed(commandBuffer,
+		                         static_cast<uint32_t>(OCar2.indices.size()), 1, 0, 0, 0);
+		        break;
             case 2:
                 PCar.bind(commandBuffer);
                 DSGubo.bind(commandBuffer, PCar, 0, currentImage);
@@ -687,7 +670,13 @@ class Dealership : public BaseProject {
                 DSCar3.bind(commandBuffer, PCar, 1, currentImage);
                 vkCmdDrawIndexed(commandBuffer,
                                  static_cast<uint32_t>(MCar3.indices.size()), 1, 0, 0, 0);
-                break;
+
+				POverlay.bind(commandBuffer);
+		        OCar3.bind(commandBuffer);
+		        DSOCar3.bind(commandBuffer, POverlay, 0, currentImage);
+		        vkCmdDrawIndexed(commandBuffer,
+		                         static_cast<uint32_t>(OCar3.indices.size()), 1, 0, 0, 0);
+				break;
             case 3:
                 PCar.bind(commandBuffer);
                 DSGubo.bind(commandBuffer, PCar, 0, currentImage);
@@ -695,7 +684,13 @@ class Dealership : public BaseProject {
                 DSCar4.bind(commandBuffer, PCar, 1, currentImage);
                 vkCmdDrawIndexed(commandBuffer,
                                  static_cast<uint32_t>(MCar4.indices.size()), 1, 0, 0, 0);
-                break;
+
+				POverlay.bind(commandBuffer);
+		        OCar4.bind(commandBuffer);
+		        DSOCar4.bind(commandBuffer, POverlay, 0, currentImage);
+		        vkCmdDrawIndexed(commandBuffer,
+		                         static_cast<uint32_t>(OCar4.indices.size()), 1, 0, 0, 0);
+				break;
             case 4:
                 PCar.bind(commandBuffer);
                 DSGubo.bind(commandBuffer, PCar, 0, currentImage);
@@ -703,10 +698,17 @@ class Dealership : public BaseProject {
                 DSCar5.bind(commandBuffer, PCar, 1, currentImage);
                 vkCmdDrawIndexed(commandBuffer,
                                  static_cast<uint32_t>(MCar5.indices.size()), 1, 0, 0, 0);
-                break;
+
+				POverlay.bind(commandBuffer);
+		        OCar5.bind(commandBuffer);
+		        DSOCar5.bind(commandBuffer, POverlay, 0, currentImage);
+		        vkCmdDrawIndexed(commandBuffer,
+		                         static_cast<uint32_t>(OCar5.indices.size()), 1, 0, 0, 0);
+				break;
         }
     }
 
+	// Definition of camera movement
     void GameLogic() {
         // Parameters
         // Camera FOV-y, Near Plane and Far Plane
@@ -795,7 +797,8 @@ class Dealership : public BaseProject {
         ViewPrj = Prj * View;
     }
 
-	static void PrintShader(int value){
+	// Helper function for printing the current shader for Car1
+	static void PrintShader(int value) {
 		switch (value){
 			case 0:
 				std::cout << "Shader: Blinn \n";
@@ -843,11 +846,7 @@ class Dealership : public BaseProject {
                 currCarModel = (currCarModel+1 == NumCars) ? 0 : currCarModel+1;
                 std::cout << "Scene : " << currCarModel << "\n";
                 OCarVisible = 0;
-                uboOCar1.visible = OCarVisible;
-                uboOCar2.visible = OCarVisible;
-                uboOCar3.visible = OCarVisible;
-                uboOCar4.visible = OCarVisible;
-                uboOCar5.visible = OCarVisible;
+	            uboOverCar.visible = OCarVisible;
                 RebuildPipeline();
             }
         } else {
@@ -863,11 +862,7 @@ class Dealership : public BaseProject {
                 currCarModel = (currCarModel-1 < 0) ? NumCars-1 : currCarModel-1;
                 std::cout << "Scene : " << currCarModel << "\n";
                 OCarVisible = 0;
-                uboOCar1.visible = OCarVisible;
-                uboOCar2.visible = OCarVisible;
-                uboOCar3.visible = OCarVisible;
-                uboOCar4.visible = OCarVisible;
-                uboOCar5.visible = OCarVisible;
+	            uboOverCar.visible = OCarVisible;
                 RebuildPipeline();
             }
         } else {
@@ -924,7 +919,7 @@ class Dealership : public BaseProject {
             }
         }
 
-        // Hold ALT to change the light color, or don't hold to change light position
+        // Use IJKL to change the spotlight position, hold ALT to change it's color parameters
         if(glfwGetKey(window, GLFW_KEY_LEFT_ALT)) {
             // While holding ALT, we can modify the light color
             if (glfwGetKey(window, GLFW_KEY_J)){
@@ -1098,7 +1093,8 @@ class Dealership : public BaseProject {
 
         GameLogic();
 
-        // Car Point light
+	    /* Environment */
+        // Car Spotlight
         gub.DlightPos = lightPos;
         gub.DlightDir = glm::normalize(lightPos - targetPoint);
         gub.DlightColor = glm::vec4(colorX, colorY, colorZ, 1.0f);
@@ -1113,24 +1109,23 @@ class Dealership : public BaseProject {
 
         DSGubo.map((int)currentImage, &gub, sizeof(gub), 0);
 
+        // Mapping of the room
         mubEnv.amb = .0f; mubEnv.gamma = 100.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::scale(glm::mat4(1), glm::vec3(3));
         mubEnv.mvpMat = ViewPrj * mubEnv.mMat;
         mubEnv.nMat = glm::inverse(glm::transpose(mubEnv.mMat));
-
-        // Mapping of the room
         DSEnv.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
+        // Mapping of the Showcase platform
         mubEnv.amb = .0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::rotate(glm::translate(glm::mat4(1.0f),
                                    glm::vec3(6.0f, 0.0f, 6.0f)),ShowRot,
                                    glm::vec3(0,1,0));
         mubEnv.mvpMat = ViewPrj * mubEnv.mMat;
         mubEnv.nMat = glm::inverse(glm::transpose(mubEnv.mMat));
-
-        // Mapping of the Showcase platform
         DSShow.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
+        // Mapping of the Door
         mubEnv.amb = 0.01f; mubEnv.gamma = 100.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::rotate(glm::rotate(glm::scale(
             glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 1.65f, 12.0f)),
@@ -1138,19 +1133,16 @@ class Dealership : public BaseProject {
             glm::radians(-90.0f), glm::vec3(0, 0, 1));
         mubEnv.mvpMat = ViewPrj * mubEnv.mMat;
         mubEnv.nMat = glm::inverse(glm::transpose(mubEnv.mMat));
-
-        // Mapping of the Door
         DSDoor.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
+        // Mapping of the sphere
         mubEnv.amb = 1.0f; mubEnv.gamma = 180.0f; mubEnv.sColor = glm::vec3(1.0f);
         mubEnv.mMat = glm::scale(glm::translate(glm::mat4(1.0f), lightPos), glm::vec3(0.2));
         mubEnv.mvpMat = ViewPrj * mubEnv.mMat;
         mubEnv.nMat = glm::inverse(glm::transpose(mubEnv.mMat));
-
-        // Mapping of the sphere
         DSSphere.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
-		// Mapping spotlights
+		/* Spotlights */
 	    mubSpotlight.amb = 1.0f;
 	    mubSpotlight.gamma = 1000.0f;
 	    mubSpotlight.sColor = 0.9f * glm::vec3(1.0f);
@@ -1167,6 +1159,8 @@ class Dealership : public BaseProject {
 			glm::vec3 direction = -glm::normalize(targetPoint - gub.pointLights[i].lightPos); // Calculate the direction towards the target point
 			glm::vec3 up = glm::vec3(0, -1, -1.1f); // Define the up direction
             glm::mat4 rotationMat = glm::lookAt(glm::vec3(0.0f), direction, up); // Create a rotation matrix based on the direction and up vectors
+
+			// Mapping of the spotlights
 			mubSpotlight.mMat = glm::scale(glm::translate(glm::mat4(1.0f), gub.pointLights[i].lightPos) * rotationMat, glm::vec3(2));
 			mubSpotlight.mvpMat = ViewPrj * mubSpotlight.mMat;
 			mubSpotlight.nMat = glm::inverse(glm::transpose(mubSpotlight.mMat));
@@ -1202,8 +1196,7 @@ class Dealership : public BaseProject {
 				}
 				RebuildPipeline();
 			}
-		}
-		else {
+		} else {
 			if ((curDebounce == GLFW_KEY_B) && debounce) {
 				debounce = false;
 				curDebounce = 0;
@@ -1236,8 +1229,7 @@ class Dealership : public BaseProject {
 				}
 				RebuildPipeline();
 			}
-		}
-		else {
+		} else {
 			if ((curDebounce == GLFW_KEY_V) && debounce) {
 				debounce = false;
 				curDebounce = 0;
@@ -1266,7 +1258,6 @@ class Dealership : public BaseProject {
 			default:
 				break;
 		}
-		
 		// Manual tuning of gamma parameter (press 2 to increase, press 1 to decrease)
 		if (glfwGetKey(window, GLFW_KEY_2)) {
 			gamma = gamma + 1.0f;
@@ -1286,6 +1277,25 @@ class Dealership : public BaseProject {
 			std::cout << "Ms_factor= " << Ms_factor << std::endl;
 		}
 
+		/* Overlays */
+	    uboCommands.visible = 1.0f;
+	    DSCommands.map((int)currentImage, &uboCommands, sizeof(uboCommands), 0);
+		// Change visibility of overlay by pressing F
+	    if(glfwGetKey(window, GLFW_KEY_F)) {
+		    if (!debounce) {
+			    debounce = true;
+			    curDebounce = GLFW_KEY_F;
+			    OCarVisible = (OCarVisible == 0.0f) ? 1.0f : 0.0f;
+			    uboOverCar.visible = OCarVisible;
+		    }
+	    } else {
+		    if ((curDebounce == GLFW_KEY_F) && debounce) {
+			    debounce = false;
+			    curDebounce = 0;
+		    }
+	    }
+
+		/* Car Models */
 		// Mapping of the car models
         switch(currCarModel) {
             case 0:
@@ -1298,6 +1308,7 @@ class Dealership : public BaseProject {
                 mubCar.mvpMat = ViewPrj * mubCar.mMat;
                 mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
                 DSCar1.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
+		        DSOCar1.map((int)currentImage, &uboOverCar, sizeof(uboOverCar), 0);
                 break;
             case 1:
 				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
@@ -1309,6 +1320,7 @@ class Dealership : public BaseProject {
                 mubCar.mvpMat = ViewPrj * mubCar.mMat;
                 mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
                 DSCar2.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
+		        DSOCar2.map((int)currentImage, &uboOverCar, sizeof(uboOverCar), 0);
                 break;
             case 2:
 				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
@@ -1324,6 +1336,7 @@ class Dealership : public BaseProject {
                 mubCar.mvpMat = ViewPrj * mubCar.mMat;
                 mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
                 DSCar3.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
+		        DSOCar3.map((int)currentImage, &uboOverCar, sizeof(uboOverCar), 0);
                 break;
             case 3:
                 mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
@@ -1337,6 +1350,7 @@ class Dealership : public BaseProject {
                 mubCar.mvpMat = ViewPrj * mubCar.mMat;
                 mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
                 DSCar4.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
+		        DSOCar4.map((int)currentImage, &uboOverCar, sizeof(uboOverCar), 0);
                 break;
             case 4:
 				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
@@ -1348,53 +1362,9 @@ class Dealership : public BaseProject {
                 mubCar.mvpMat = ViewPrj * mubCar.mMat;
                 mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
                 DSCar5.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
+		        DSOCar5.map((int)currentImage, &uboOverCar, sizeof(uboOverCar), 0);
                 break;
         }
-        
-        uboCommands.visible = 1.0f;
-        DSCommands.map(currentImage, &uboCommands, sizeof(uboCommands), 0);
-        
-        DSOCar1.map(currentImage, &uboOCar1, sizeof(uboOCar1), 0);
-        DSOCar2.map(currentImage, &uboOCar2, sizeof(uboOCar2), 0);
-        DSOCar3.map(currentImage, &uboOCar3, sizeof(uboOCar3), 0);
-        DSOCar4.map(currentImage, &uboOCar4, sizeof(uboOCar4), 0);
-        DSOCar5.map(currentImage, &uboOCar5, sizeof(uboOCar5), 0);
-        
-        
-        if(glfwGetKey(window, GLFW_KEY_F)) {
-            if (!debounce) {
-                debounce = true;
-                curDebounce = GLFW_KEY_F;
-                OCarVisible = (OCarVisible == 0.0f) ? 1.0f : 0.0f;
-                
-                switch(currCarModel){
-                    case 0:
-                        uboOCar1.visible = OCarVisible;
-                        break;
-                    case 1:
-                        uboOCar2.visible = OCarVisible;
-                        break;
-                    case 2:
-                        uboOCar3.visible = OCarVisible;
-                        break;
-                    case 3:
-                        uboOCar4.visible = OCarVisible;
-                        break;
-                    case 4:
-                        uboOCar5.visible = OCarVisible;
-                        break;
-                        
-                }
-            }
-            
-        } else {
-            if ((curDebounce == GLFW_KEY_F) && debounce) {
-                debounce = false;
-                curDebounce = 0;
-            }}
-        
-        
-        
     }
 
     static void createEnvMesh(std::vector<VertexMesh> &vDef, std::vector<uint32_t> &vIdx);
