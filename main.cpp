@@ -256,8 +256,6 @@ class Dealership : public BaseProject {
         
         Commands.vertices = {{{-0.8f, 0.6f}, {0.0f,0.0f}}, {{-0.8f, 0.95f}, {0.0f,1.0f}},
                          {{ 0.8f, 0.6f}, {1.0f,0.0f}}, {{ 0.8f, 0.95f}, {1.0f,1.0f}}};
-//        Commands.vertices = {{{-0.8f, -0.55f}, {0.0f,0.0f}}, {{-0.8f, 0.25f}, {0.0f,1.0f}},
-//                         {{ 0.8f, -0.55f}, {1.0f,0.0f}}, {{ 0.8f, 0.25f}, {1.0f,1.0f}}};
         Commands.indices = {0, 1, 2,    1, 2, 3};
         Commands.initMesh(this, &VOverlay);
         
@@ -760,14 +758,11 @@ class Dealership : public BaseProject {
 
         // Collision check with the car showcase
         if (glm::distance(CarSpawnPos, Pos) < RADIUS) Pos = PrevPos;
-        //if (Pos != PrevPos) std::cout << "Pos = (" << Pos.x << ", " << Pos.y << ", " << Pos.z << ")" << std::endl;
-        PrevPos = Pos;
 
+        PrevPos = Pos;
 
         // Rotation
         Yaw = Yaw - ROT_SPEED * deltaT * r.y;
-        /*if (Yaw != PrevYaw) std::cout << "Yaw = " << Yaw << std::endl;
-        PrevYaw = Yaw;*/
 
         Pitch = Pitch + ROT_SPEED * deltaT * r.x;
         Pitch  =  Pitch < minPitch ? minPitch :
