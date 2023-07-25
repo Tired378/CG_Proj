@@ -60,25 +60,23 @@ class Dealership : public BaseProject {
     Pipeline PMesh, PShow, PDoor, PSpotlight;
 	Pipeline PCar1_0, PCar1_1, PCar1_2, PCar2, PCar;
 
+	// Descriptors
     DescriptorSet DSEnv, DSShow, DSGubo, DSDoor, DSSphere, DSSpotlight[MAX_LIGHTS];
     DescriptorSet DSCar1, DSCar2, DSCar3, DSCar4, DSCar5;
 
-    // Models, textures and Descriptors (values assigned to the uniforms)
+    // Models
     Model<VertexMesh> MEnv, MShow, MSphere, MDoor, MSpotlight[MAX_LIGHTS];
     Model<VertexMesh> MCar1, MCar2, MCar3, MCar4, MCar5;
 
-    // C++ storage for uniform variables
+    // Uniform variables
 	MeshUniformBlock mubCar, mubEnv, mubSpotlight;
-
     GlobalUniformBlock gub;
 
+	// Textures
     Texture TEnv, TEnv_1, TEnv_2;
     Texture TDoor, TDoor_1, TDoor_2;
-
 	Texture TSphere;
-
     Texture TSpotlight_0, TSpotlight_1, TSpotlight_2, TSpotlight_3;
-
     Texture TCar1_0, TCar1_1, TCar1_2, TCar1_3;
     Texture TCar2_0, TCar2_1;
     Texture TCar3_0;
@@ -86,11 +84,8 @@ class Dealership : public BaseProject {
     Texture TCar5_0;
 
     // Other application parameters
-    int currCarModel = 0;
-    int NumCars = 5;
-	int currPipeShader = 0;
-	int NumShaders = 3;
-	int currLightSetup = 0, NumLightSetup = 3;
+    int currCarModel = 0, currPipeShader = 0, currLightSetup = 0;
+    int NumCars = 5, NumShaders = 3, NumLightSetup = 3;
     glm::mat4 ViewPrj;
     glm::vec3 Pos = glm::vec3(6.0f,1.0f,10.0f); // Initial spawn location
     glm::vec3 PrevPos = Pos;
@@ -98,7 +93,6 @@ class Dealership : public BaseProject {
     glm::vec3 cameraPos;
     // Initial camera angles
     float Yaw = glm::radians(0.0f);
-    //float PrevYaw = Yaw;
     float Pitch = glm::radians(0.0f);
     float Roll = glm::radians(0.0f);
     float MOVE_SPEED = 2.0f;
@@ -194,7 +188,6 @@ class Dealership : public BaseProject {
         PCar2.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/Car2ShaderFrag.spv", {&DSLGubo, &DSLCar2});
         PCar.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/CarShaderFrag.spv", {&DSLGubo, &DSLCar});
 
-        //PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLEnv});
 	    PMesh.init(this, &VMesh, "shaders/MeshVert.spv", "shaders/BlinnNormMapFrag.spv", {&DSLGubo, &DSLEnv});
         PMesh.setAdvancedFeatures(VK_COMPARE_OP_LESS, VK_POLYGON_MODE_FILL, VK_CULL_MODE_NONE, false);
 
@@ -223,7 +216,6 @@ class Dealership : public BaseProject {
         MCar5.init(this, &VMesh, "Models/Car5.obj", OBJ);
 
         MDoor.init(this, &VMesh, "models/door/door.gltf", GLTF);
-
 
 		for (auto & i : MSpotlight)
 		{
@@ -263,7 +255,7 @@ class Dealership : public BaseProject {
     
     // Here you create your pipelines and Descriptor Sets!
     void pipelinesAndDescriptorSetsInit() override {
-        // This creates a new pipeline (with the current surface), using its shaders
+        // Pipeline creation
         PMesh.create();
         PCar1_0.create();
 	    PCar1_1.create();
@@ -274,7 +266,7 @@ class Dealership : public BaseProject {
 		PShow.create();
         PSpotlight.create();
 
-        // Here you define the data set
+        // Descriptor sets init
         DSEnv.init(this, &DSLEnv, {
                 {0, UNIFORM, sizeof(MeshUniformBlock), nullptr},
                 {1, TEXTURE, 0, &TEnv},
@@ -562,7 +554,7 @@ class Dealership : public BaseProject {
         const float farPlane = 100.f;
         // Camera target height and distance
         const float camHeight = 1.5;
-        const float camDist = 1; /*1.5;*/
+        const float camDist = 1;
         // Camera Pitch limits
         const float minPitch = glm::radians(-60.0f);
         const float maxPitch = glm::radians(60.0f);
@@ -605,9 +597,9 @@ class Dealership : public BaseProject {
 
         // Collision check with the car showcase
         if (glm::distance(CarSpawnPos, Pos) < RADIUS) Pos = PrevPos;
-
         //if (Pos != PrevPos) std::cout << "Pos = (" << Pos.x << ", " << Pos.y << ", " << Pos.z << ")" << std::endl;
         PrevPos = Pos;
+
 
         // Rotation
         Yaw = Yaw - ROT_SPEED * deltaT * r.y;
@@ -653,6 +645,8 @@ class Dealership : public BaseProject {
 			case 2:
 				std::cout << "Shader: GGX \n";
 				break;
+			default:
+				break;
 		}
 	}
 
@@ -674,32 +668,11 @@ class Dealership : public BaseProject {
         static auto lightPos = glm::vec3(6.0f, 5.8f, 6.0f);
         static auto lightPosOld = lightPos;
         static auto colorOld = glm::vec3(colorX, colorY, colorZ);
-
-		
-
-		
-/*<<<<<<< Updated upstream
-
-		gub.pointLights[0].lightColor = glm::vec4(glm::vec3(1.0f, 10.0f, 1.0f), 1.0f);
-		gub.pointLights[1].lightColor = glm::vec4(glm::vec3(1.0f, 1.0f, 10.0f), 1.0f);
-		gub.pointLights[2].lightColor = glm::vec4(glm::vec3(10.0f, 1.0f, 1.0f), 1.0f);
-		gub.pointLights[3].lightColor = glm::vec4(glm::vec3(1.0f, 10.0f, 1.0f), 1.0f);
-		const float radius = 4.0f; // Radius of the circle
-		auto circleCenter = glm::vec3(6.0f, 5.5f, 6.0f); // Center position of the circle
-		auto targetPoint = glm::vec3(6.0f, 1.0f, 6.0f); // Target point in the center
-
-		for (int i = 0; i < MAX_LIGHTS; i++) {
-			float angle = (float)i * (2 * glm::pi<float>()) / MAX_LIGHTS; // Calculate the angle for each light
-			gub.pointLights[i].lightPos = circleCenter + glm::vec3(radius * cos(angle), 0.0f, radius * sin(angle));
-		}
-=======*/
-		auto targetPoint = glm::vec3(6.0f, 1.0f, 6.0f); // Target point in the center (for the light 
+		auto targetPoint = glm::vec3(6.0f, 1.0f, 6.0f); // Target point in the center (for the lights)
 
         // Key press parameters
         static bool debounce = false;
         static int curDebounce = 0;
-        static bool showNormal = false;
-        static bool showUV = false;
 
         // Switch currCarModel on specific key press
         if(glfwGetKey(window, GLFW_KEY_N)) {
@@ -739,7 +712,6 @@ class Dealership : public BaseProject {
 				    curDebounce = GLFW_KEY_X;
 				    currPipeShader = (currPipeShader+1 == NumShaders) ? 0 : currPipeShader+1;
 				    PrintShader(currPipeShader);
-					//std::cout << "Shader : " << currPipeShader << "\n";
 				    RebuildPipeline();
 			    }
 		    } else {
@@ -754,7 +726,6 @@ class Dealership : public BaseProject {
 				    curDebounce = GLFW_KEY_Z;
 				    currPipeShader = (currPipeShader-1 < 0) ? NumShaders-1 : currPipeShader-1;
 				    PrintShader(currPipeShader);
-				    //std::cout << "Shader : " << currPipeShader << "\n";
 				    RebuildPipeline();
 			    }
 		    } else {
@@ -1006,19 +977,20 @@ class Dealership : public BaseProject {
         // Mapping of the sphere
         DSSphere.map((int)currentImage, &mubEnv, sizeof(mubEnv), 0);
 
-		//Mapping spotlights
+
+		// Mapping spotlights
 	    mubSpotlight.amb = 1.0f;
 	    mubSpotlight.gamma = 1000.0f;
 	    mubSpotlight.sColor = 0.9f * glm::vec3(1.0f);
-		//positioning spotlights
+		// positioning spotlights
 		const float radius = 4.0f; // Radius of the circle 
 		auto circleCenter = glm::vec3(6.0f, 5.5f, 6.0f); // Center position of the circle
-		//Location
+		// Location
 		for (int i = 0; i < MAX_LIGHTS; i++) {
-			float angle = i * (2 * glm::pi<float>()) / MAX_LIGHTS; // Calculate the angle for each light
+			float angle = (float)i * (2 * glm::pi<float>()) / MAX_LIGHTS; // Calculate the angle for each light
 			gub.pointLights[i].lightPos = circleCenter + glm::vec3(radius * cos(angle), 0.0f, radius * sin(angle));
 		}
-		//Rotation
+		// Rotation
 		for (int i = 0; i < MAX_LIGHTS; i++) {
 			glm::vec3 direction = -glm::normalize(targetPoint - gub.pointLights[i].lightPos); // Calculate the direction towards the target point
 			glm::vec3 up = glm::vec3(0, -1, -1.1f); // Define the up direction
@@ -1030,11 +1002,10 @@ class Dealership : public BaseProject {
 			mubSpotlight.nMat = glm::inverse(glm::transpose(mubSpotlight.mMat));
 			DSSpotlight[i].map((int)currentImage, &mubSpotlight, sizeof(mubSpotlight), 0);
 		}
-
-		//Spotlight parameters setting  (color, gamma, Ms_factor)
+		// Spotlight parameters setting  (color, gamma, Ms_factor)
 		static float gamma = 500.0f;
 		static float Ms_factor = 5.0f;
-		//Press B to go to the next spotlight scene setting
+		// Press B to go to the next spotlight scene setting
 		if (glfwGetKey(window, GLFW_KEY_B)) {
 			if (!debounce) {
 				debounce = true;
@@ -1068,7 +1039,7 @@ class Dealership : public BaseProject {
 				curDebounce = 0;
 			}
 		}
-		//Press V to go to the previous spotlight scene setting
+		// Press V to go to the previous spotlight scene setting
 		if (glfwGetKey(window, GLFW_KEY_V)) {
 			if (!debounce) {
 				debounce = true;
@@ -1102,7 +1073,7 @@ class Dealership : public BaseProject {
 				curDebounce = 0;
 			}
 		}
-		//Spotlights colors setting
+		// Spotlights colors setting
 		switch (currLightSetup) {
 			case 0:
 				gub.pointLights[0].lightColor = glm::vec4(glm::vec3(1.0f, 1.0f, 0.0f), 1.0f);
@@ -1124,9 +1095,9 @@ class Dealership : public BaseProject {
 				break;
 			default:
 				break;
-		}		
+		}
 		
-		//Manual tuning of gamma parameter (press 2 to increase, press 1 to decrease)
+		// Manual tuning of gamma parameter (press 2 to increase, press 1 to decrease)
 		if (glfwGetKey(window, GLFW_KEY_2)) {
 			gamma = gamma + 1.0f;
 			std::cout << "gamma= "<< gamma << std::endl;
@@ -1135,7 +1106,7 @@ class Dealership : public BaseProject {
 			gamma = glm::max(gamma - 1.0f, 0.1f);
 			std::cout << "gamma= " << gamma << std::endl;
 		}
-		//Manual tuning of specular factor parameter (press 4 to increase, press 3 to decrease)
+		// Manual tuning of specular factor parameter (press 4 to increase, press 3 to decrease)
 		if (glfwGetKey(window, GLFW_KEY_4)) {
 			Ms_factor = Ms_factor + 1.0f;
 			std::cout << "Ms_factor= "<< Ms_factor << std::endl;
@@ -1145,36 +1116,41 @@ class Dealership : public BaseProject {
 			std::cout << "Ms_factor= " << Ms_factor << std::endl;
 		}
 
+		// Mapping of the car models
         switch(currCarModel) {
             case 0:
                 mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
-                mubCar.mMat = glm::rotate(glm::scale(glm::translate(glm::mat4(1.0f),
-                                                                    glm::vec3(6.0f, 0.1f, 6.0f)),
-                                                     glm::vec3(0.012, 0.012, 0.012)), ShowRot,
-                                          glm::vec3(0,1,0));
+                mubCar.mMat = glm::rotate(
+							glm::scale(
+							glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)),
+							glm::vec3(0.012, 0.012, 0.012)),
+						ShowRot, glm::vec3(0,1,0));
                 mubCar.mvpMat = ViewPrj * mubCar.mMat;
                 mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
                 DSCar1.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 1:
 				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
-                mubCar.mMat = glm::rotate(glm::scale(
+                mubCar.mMat = glm::rotate(
+						glm::scale(
                         glm::translate(glm::mat4(1.0f),glm::vec3(6.0f, 0.1f, 6.0f)),
-                         glm::vec3(0.0115, 0.0115, 0.0115)), ShowRot, glm::vec3(0,1,0));
+                         glm::vec3(0.0115, 0.0115, 0.0115)),
+					 ShowRot, glm::vec3(0,1,0));
                 mubCar.mvpMat = ViewPrj * mubCar.mMat;
                 mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
                 DSCar2.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
                 break;
             case 2:
 				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
-                mubCar.mMat = glm::rotate(glm::scale(
+                mubCar.mMat = glm::rotate(
+						glm::scale(
                         glm::rotate(
                         glm::rotate(
                         glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.5f, 6.0f)),
                       glm::radians(90.0f), glm::vec3(-1, 0, 0)),
                       glm::radians(90.0f), glm::vec3(0, 0, 1)),
                          glm::vec3(0.08, 0.08, 0.08)),
-                                          ShowRot, glm::vec3(0,0,1));
+					 ShowRot, glm::vec3(0,0,1));
                 mubCar.mvpMat = ViewPrj * mubCar.mMat;
                 mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
                 DSCar3.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
@@ -1184,11 +1160,8 @@ class Dealership : public BaseProject {
                 mubCar.mMat = glm::rotate(
                         glm::scale(
                         glm::rotate(
-                        glm::translate(
-                        glm::mat4(1.0f),
-                         glm::vec3(6.0f, 1.2f, 6.0f)),
-                      glm::radians(90.0f),
-                         glm::vec3(0, 1, 0)),
+                        glm::translate(glm::mat4(1.0f),glm::vec3(6.0f, 1.2f, 6.0f)),
+                      glm::radians(90.0f),glm::vec3(0, 1, 0)),
                          glm::vec3(0.035, 0.035, 0.035)),
                       ShowRot, glm::vec3(0,1,0));
                 mubCar.mvpMat = ViewPrj * mubCar.mMat;
@@ -1197,10 +1170,11 @@ class Dealership : public BaseProject {
                 break;
             case 4:
 				mubCar.amb = 1.0f; mubCar.gamma = gamma; mubCar.sColor = Ms_factor * glm::vec3(1.0f);
-                mubCar.mMat = glm::rotate(glm::scale(
-                          glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)),
-                           glm::vec3(1.3, 1.3, 1.3)),
-                                          ShowRot, glm::vec3(0,1,0));
+                mubCar.mMat = glm::rotate(
+						glm::scale(
+                        glm::translate(glm::mat4(1.0f), glm::vec3(6.0f, 0.1f, 6.0f)),
+                         glm::vec3(1.3, 1.3, 1.3)),
+					  ShowRot, glm::vec3(0,1,0));
                 mubCar.mvpMat = ViewPrj * mubCar.mMat;
                 mubCar.nMat = glm::inverse(glm::transpose(mubCar.mMat));
                 DSCar5.map((int)currentImage, &mubCar, sizeof(mubCar), 0);
